@@ -1,0 +1,2 @@
+# CopadoEnvironmentSync
+plugin-int-sync
