@@ -1,0 +1,50 @@
+{
+  "name": "int-sync",
+  "displayName": "Copado INT Sync",
+  "description": "Deploy-gated forward integration: sync INT sandboxes from QA/UAT without Copado back promotion",
+  "version": "1.0.0",
+  "publisher": "NaveenBonthu9",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "int-sync.open",
+        "title": "Copado INT Sync: Open Dashboard"
+      }
+    ],
+    "configuration": {
+      "title": "Copado INT Sync",
+      "properties": {
+        "int-sync.repoPath": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute path to the rbk-sfdx-release repo clone (e.g. D:\\RubrikRepoVDI\\rbk-sfdx-release)"
+        },
+        "int-sync.scriptsPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to INT sync Python scripts. Leave blank to auto-resolve from repoPath/.claude/skills/copado-int-sync/scripts"
+        },
+        "int-sync.defaultSource": {
+          "type": "string",
+          "enum": ["rbkqa", "rbkuat"],
+          "default": "rbkqa",
+          "description": "Default source branch for syncs"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "npx tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "^18",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5"
+  }
+}

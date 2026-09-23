@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>INT Sync Dashboard</title>
+<style>
+:root {
+  --bg:          #0f1117;
+  --surface:     #1a1d2b;
+  --surface2:    #232638;
+  --border:      #2e3250;
+  --text:        #e2e8f0;
+  --muted:       #7c85a0;
+  --accent:      #6366f1;
+  --accent-glow: rgba(99,102,241,0.18);
+  --green:       #22c55e;
+  --red:         #f43f5e;
+  --yellow:      #eab308;
+  --blue:        #3b82f6;
+  --orange:      #f97316;
+
+  --step-pending: #2e3250;
+  --step-running: #1e3a8a;
+  --step-done:    #14532d;
+  --step-error:   #7f1d1d;
+
+  --font-mono: 'Cascadia Code', 'Fira Mono', 'Consolas', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 18px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.header-logo {
+  width: 28px; height: 28px;
+  background: var(--accent);
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+.header-title { font-size: 15px; font-weight: 700; color: var(--text); }
+.header-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.header-spacer { flex: 1; }
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border: 1px solid transparent;
+}
+.pill-idle    { background: var(--surface2); color: var(--muted); border-color: var(--border); }
+.pill-running { background: rgba(59,130,246,0.15); color: var(--blue); border-color: rgba(59,130,246,0.4); }
+.pill-done    { background: rgba(34,197,94,0.15); color: var(--green); border-color: rgba(34,197,94,0.4); }
+.pill-error   { background: rgba(244,63,94,0.15); color: var(--red); border-color: rgba(244,63,94,0.4); }
+.dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+.dot-pulse { animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* ── Layout ─────────────────────────────────────────────── */
+.layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Left panel ─────────────────────────────────────────── */
+.left {
+  width: 310px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.section-label {
+  padding: 10px 16px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.config-row {
+  padding: 4px 16px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.config-label { font-size: 11px; color: var(--muted); }
+
+select, input[type="text"] {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 5px;
+  padding: 5px 8px;
+  font-size: 12px;
+  width: 100%;
+  outline: none;
+}
+select:focus, input[type="text"]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+.target-list { padding: 4px 16px 12px; display: flex; flex-direction: column; gap: 6px; }
+.target-chip {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.target-chip:hover { border-color: var(--muted); }
+.target-chip-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.target-chip input[type=checkbox] { width: 14px; height: 14px; accent-color: var(--accent); cursor: pointer; flex-shrink:0; margin-top: 2px; }
+.target-chip-body { flex: 1; min-width: 0; }
+.target-name { font-size: 12px; font-weight: 600; font-family: var(--font-mono); word-break: break-all; line-height: 1.3; }
+.target-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.org-username { font-size: 10px; color: var(--muted); margin-top: 3px; word-break: break-all; line-height: 1.3; }
+.target-chip:has(input:checked) { border-color: var(--accent); background: var(--accent-glow); }
+
+/* branch override input (for non-INT orgs) */
+.branch-row {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  margin-top: 7px;
+  padding-top: 7px;
+  border-top: 1px solid var(--border);
+}
+.branch-row label { font-size: 10px; color: var(--muted); flex-shrink: 0; }
+.branch-input {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  outline: none;
+}
+.branch-input:focus { border-color: var(--accent); }
+.target-chip:has(input:checked) .branch-row { display: flex; }
+
+/* org status badge */
+.org-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 9px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  padding: 2px 6px; border-radius: 3px; flex-shrink: 0;
+}
+.badge-connected   { background: rgba(34,197,94,0.15);  color: var(--green); }
+.badge-expired     { background: rgba(244,63,94,0.15);  color: var(--red); }
+.badge-unknown     { background: rgba(124,133,160,0.15); color: var(--muted); }
+.badge-int         { background: rgba(99,102,241,0.2);  color: var(--accent); }
+
+.org-loading { display:flex; align-items:center; gap:8px; padding: 10px 2px; }
+
+.btn {
+  display: block;
+  margin: 8px 16px 4px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: opacity 0.15s;
+}
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:not(:disabled):hover { opacity: 0.85; }
+.btn-danger  { background: var(--red); color: #fff; }
+.btn-danger:not(:disabled):hover { opacity: 0.85; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+
+.divider { height: 1px; background: var(--border); margin: 8px 16px; }
+
+/* ── Right panel ─────────────────────────────────────────── */
+.right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* ── Steps timeline ─────────────────────────────────────── */
+.steps-bar {
+  display: flex;
+  gap: 0;
+  padding: 12px 18px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+}
+.step-bubble {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+  border: 2px solid var(--border);
+  background: var(--step-pending);
+  color: var(--muted);
+  transition: all 0.25s;
+  flex-shrink: 0;
+}
+.step-bubble.running { border-color: var(--blue); background: var(--step-running); color: var(--blue); animation: pulse 1.2s ease-in-out infinite; }
+.step-bubble.done    { border-color: var(--green); background: var(--step-done); color: var(--green); }
+.step-bubble.error   { border-color: var(--red); background: var(--step-error); color: var(--red); }
+
+.step-connector {
+  width: 24px; height: 2px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+.step-connector.done { background: var(--green); }
+
+.step-label {
+  display: none; /* shown on hover via tooltip */
+}
+
+/* ── Tabs ─────────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.tab {
+  padding: 7px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  user-select: none;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab:hover:not(.active) { color: var(--text); }
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--red);
+  color: #fff;
+  border-radius: 99px;
+  font-size: 9px;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  margin-left: 5px;
+}
+.tab-badge.hidden { display: none; }
+
+/* ── Tab content ─────────────────────────────────────────── */
+.tab-panels { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.tab-panel { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+.tab-panel.active { display: flex; }
+
+/* ── Log panel ─────────────────────────────────────────── */
+.log-pane {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 16px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--bg);
+}
+.log-line { display: flex; gap: 8px; }
+.log-time { color: var(--muted); flex-shrink: 0; }
+.log-tgt  { color: var(--accent); flex-shrink: 0; min-width: 90px; }
+.log-msg  { flex: 1; word-break: break-word; white-space: pre-wrap; }
+.log-line.stderr  .log-msg { color: var(--muted); }
+.log-line.warn    .log-msg { color: var(--yellow); }
+.log-line.error   .log-msg { color: var(--red); }
+.log-line.deploy  .log-msg { color: #a5b4fc; }
+.log-line.success .log-msg { color: var(--green); font-weight: 600; }
+
+/* ── Summary panel ─────────────────────────────────────── */
+.summary-pane {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.target-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.target-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.target-card-body { padding: 10px 14px; font-size: 12px; }
+.target-card-title { font-size: 13px; font-weight: 700; font-family: var(--font-mono); }
+.status-icon { font-size: 16px; }
+.detail-row { display: flex; gap: 12px; margin-top: 4px; color: var(--muted); }
+.detail-val { color: var(--text); }
+
+/* ── Conflict panel ─────────────────────────────────────── */
+.conflicts-pane {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.conflict-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.conflict-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.conflict-file { font-family: var(--font-mono); font-size: 11px; color: var(--yellow); flex: 1; word-break: break-all; }
+.conflict-resolved { color: var(--green); font-size: 11px; }
+.diff-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+.diff-side {
+  padding: 8px 10px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.5;
+  max-height: 220px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+.diff-side:first-child { border-right: 1px solid var(--border); }
+.diff-side-label { font-size: 10px; color: var(--muted); margin-bottom: 6px; font-weight: 700; }
+.conflict-actions {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--surface2);
+}
+.sig-drop-warning {
+  background: rgba(234,179,8,0.1);
+  border: 1px solid rgba(234,179,8,0.3);
+  border-radius: 5px;
+  padding: 6px 10px;
+  font-size: 11px;
+  color: var(--yellow);
+  margin: 6px 12px;
+}
+
+/* ── Empty state ─────────────────────────────────────────── */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  padding: 40px;
+  text-align: center;
+}
+.empty-icon { font-size: 36px; opacity: 0.4; }
+
+/* ── Deploy stage track ─────────────────────────────────── */
+.deploy-track {
+  display: flex;
+  gap: 6px;
+  padding: 8px 18px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  align-items: center;
+  overflow-x: auto;
+}
+.deploy-track-label { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+.deploy-stage {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--muted);
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.deploy-stage.active { border-color: var(--blue); color: var(--blue); background: rgba(59,130,246,0.1); }
+.deploy-stage.done   { border-color: var(--green); color: var(--green); background: rgba(34,197,94,0.1); }
+.deploy-stage.error  { border-color: var(--red); color: var(--red); background: rgba(244,63,94,0.1); }
+
+/* ── Scrollbar ─────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+/* ── Fade-in animations ─────────────────────────────────── */
+.fade-in { animation: fadeIn 0.2s ease-out; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-logo">⚡</div>
+  <div>
+    <div class="header-title">Copado Environment Sync</div>
+    <div class="header-sub">Deploy-gated environment promotion · Copado pipelines</div>
+  </div>
+  <div class="header-spacer"></div>
+  <div class="status-pill pill-idle" id="globalStatus">
+    <div class="dot"></div>
+    <span>Idle</span>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- Left sidebar: config + controls -->
+  <div class="left">
+
+    <!-- ① PIPELINE SETUP — top -->
+    <div class="section-label" style="display:flex;align-items:center;gap:6px">
+      PIPELINE
+      <span id="pipelineStatus" style="font-size:9px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;flex:1"></span>
+    </div>
+
+    <div class="config-row">
+      <div class="config-label">Copado org <span style="font-size:9px;color:var(--muted)">(pipeline source)</span></div>
+      <div style="display:flex;gap:4px">
+        <input type="text" id="copadoOrg" placeholder="rbkqa" style="flex:1" />
+        <button onclick="loadPipelines()" title="Query pipelines from this org"
+          style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:5px 10px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;flex-shrink:0">
+          Load
+        </button>
+      </div>
+    </div>
+
+    <div class="config-row" style="padding-top:0;padding-bottom:8px">
+      <select id="pipelineSelect" onchange="onPipelineChange()" disabled>
+        <option value="">— enter Copado org first —</option>
+      </select>
+    </div>
+
+    <!-- ② CONFIGURATION — repo path + source branch (auto-populated from pipeline) -->
+    <div class="section-label">Configuration</div>
+
+    <div class="config-row">
+      <div class="config-label" style="display:flex;align-items:center;gap:6px">
+        Repo path
+        <span id="repoPathStatus" style="font-size:9px;font-weight:400;color:var(--muted)"></span>
+      </div>
+      <input type="text" id="repoPath" placeholder="Auto-detected from pipeline…" />
+    </div>
+
+    <div class="config-row">
+      <div class="config-label">Source branch</div>
+      <select id="source" disabled>
+        <option value="">— select pipeline first —</option>
+      </select>
+    </div>
+
+    <!-- ③ ENVIRONMENTS -->
+    <div class="section-label" style="display:flex;align-items:center;gap:6px">
+      ENVIRONMENTS
+      <button onclick="refreshEnvs()" title="Reload environments" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:0;line-height:1">↺</button>
+    </div>
+
+    <div style="padding: 0 16px 6px; display:flex; gap:6px; align-items:center;">
+      <input type="text" id="envFilter" placeholder="Filter environments…" style="flex:1" oninput="filterEnvs(this.value)" />
+    </div>
+
+    <div class="target-list" id="targetList">
+      <div style="padding:8px 2px;color:var(--muted);font-size:12px;line-height:1.6" id="envsPlaceholder">
+        Enter Copado org → Load → select a pipeline
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="syncBtn" onclick="startSync()">Start Sync</button>
+    <button class="btn btn-danger" id="abortBtn" onclick="abortSync()" disabled style="display:none">Abort</button>
+
+    <div class="divider"></div>
+    <div class="section-label">Conflict Rules</div>
+    <div style="padding: 0 16px 12px; font-size: 11px; color: var(--muted); line-height: 1.7;">
+      <div><span style="color:var(--green)">●</span> Identical → take source (auto)</div>
+      <div><span style="color:var(--green)">●</span> Format-only → take source (auto)</div>
+      <div><span style="color:var(--blue)">●</span> Target superset → keep target (auto)</div>
+      <div><span style="color:var(--blue)">●</span> Source superset → take source (auto)</div>
+      <div><span style="color:var(--yellow)">●</span> Divergent non-sensitive → source</div>
+      <div><span style="color:var(--red)">●</span> Divergent sensitive → manual review</div>
+    </div>
+  </div>
+
+  <!-- Right: main content -->
+  <div class="right">
+
+    <!-- Steps timeline -->
+    <div class="steps-bar" id="stepsBar">
+      <div class="step-item" data-step="1">
+        <div class="step-bubble" id="step1" title="Global Preflight">1</div>
+      </div>
+      <div class="step-connector" id="conn1-2"></div>
+      <div class="step-item" data-step="2">
+        <div class="step-bubble" id="step2" title="Auth Gate">2</div>
+      </div>
+      <div class="step-connector" id="conn2-3"></div>
+      <div class="step-item" data-step="3">
+        <div class="step-bubble" id="step3" title="Cut Branch">3</div>
+      </div>
+      <div class="step-connector" id="conn3-4"></div>
+      <div class="step-item" data-step="4">
+        <div class="step-bubble" id="step4" title="Merge + Conflicts">4</div>
+      </div>
+      <div class="step-connector" id="conn4-5"></div>
+      <div class="step-item" data-step="5">
+        <div class="step-bubble" id="step5" title="Delta Deploy">5</div>
+      </div>
+      <div class="step-connector" id="conn5-6"></div>
+      <div class="step-item" data-step="6">
+        <div class="step-bubble" id="step6" title="Promote">6</div>
+      </div>
+      <div class="step-connector" id="conn6-7"></div>
+      <div class="step-item" data-step="7">
+        <div class="step-bubble" id="step7" title="Cleanup">7</div>
+      </div>
+
+      <div style="margin-left: auto; display: flex; align-items: center; gap: 8px; padding-left: 20px;">
+        <span style="font-size:11px; color:var(--muted);" id="currentStepLabel"></span>
+      </div>
+    </div>
+
+    <!-- Deploy stage track (hidden until deploy starts) -->
+    <div class="deploy-track" id="deployTrack" style="display:none">
+      <span class="deploy-track-label">Deploy stages:</span>
+      <div class="deploy-stage" id="ds-labels">labels</div>
+      <div class="deploy-stage" id="ds-schema">schema</div>
+      <div class="deploy-stage" id="ds-recordTypes">RecordTypes</div>
+      <div class="deploy-stage" id="ds-apex">apex</div>
+      <div class="deploy-stage" id="ds-checkOnly">check-only</div>
+      <div class="deploy-stage" id="ds-realDeploy">⚡ REAL deploy</div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('log')">Log</div>
+      <div class="tab" onclick="switchTab('conflicts')">
+        Conflicts <span class="tab-badge hidden" id="conflictBadge">0</span>
+      </div>
+      <div class="tab" onclick="switchTab('summary')">Summary</div>
+    </div>
+
+    <!-- Tab panels -->
+    <div class="tab-panels">
+
+      <!-- Log -->
+      <div class="tab-panel active" id="panel-log">
+        <div class="log-pane" id="logPane">
+          <div class="empty-state" id="logEmpty">
+            <div class="empty-icon">⚡</div>
+            <div>Configure source + targets, then click <strong>Start Sync</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Conflicts -->
+      <div class="tab-panel" id="panel-conflicts">
+        <div class="conflicts-pane" id="conflictsPane">
+          <div class="empty-state">
+            <div class="empty-icon">✅</div>
+            <div>No conflicts requiring manual review</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="tab-panel" id="panel-summary">
+        <div class="summary-pane" id="summaryPane">
+          <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            <div>Summary appears after each target completes</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const vscode = acquireVsCodeApi();
+
+// ── State ─────────────────────────────────────────────────
+let running = false;
+let conflictCount = 0;
+let pendingConflicts = {}; // file → card element
+let targetStates = {}; // branch → {status, steps, ...}
+let logEmpty = true;
+
+// ── Boot ──────────────────────────────────────────────────
+vscode.postMessage({ command: 'get-config' });
+
+// ── Org / pipeline state ──────────────────────────────────
+const INT_PATTERNS = [/^rbkint/i, /^rbkint-/i, /\.rbkint/i];
+const PREVIOUSLY_CHECKED = JSON.parse(localStorage.getItem('int-sync.checkedOrgs') || 'null');
+let allEnvs = [];          // pipeline envs from Copado
+let currentCopadoOrg = '';
+let currentPipelineId = '';
+let pipelineRecords = [];  // [{Id, Name, repoUri, repoName}]
+
+function isIntOrg(alias = '', username = '') {
+  return INT_PATTERNS.some(re => re.test(alias) || re.test(username));
+}
+
+// ── Pipeline loading ──────────────────────────────────────
+function loadPipelines() {
+  const org = document.getElementById('copadoOrg').value.trim();
+  if (!org) {
+    setPipelineStatus('⚠ Enter Copado org alias first');
+    return;
+  }
+  currentCopadoOrg = org;
+  setPipelineStatus('Loading pipelines…');
+  const sel = document.getElementById('pipelineSelect');
+  sel.disabled = true;
+  sel.innerHTML = '<option value="">Loading…</option>';
+  vscode.postMessage({ command: 'get-pipelines', copadoOrg: org });
+}
+
+function onPipelineChange() {
+  const pipelineId = document.getElementById('pipelineSelect').value;
+  if (!pipelineId) return;
+  currentPipelineId = pipelineId;
+  showEnvsLoading();
+  // Reset source dropdown while loading
+  const src = document.getElementById('source');
+  src.innerHTML = '<option value="">Loading branches…</option>';
+  src.disabled = true;
+  // Find the repo URI for this pipeline
+  const rec = pipelineRecords.find(r => r.Id === pipelineId);
+  const repoUri = rec?.repoUri || '';
+  document.getElementById('repoPath').value = '';
+  setRepoPathStatus('Detecting…', 'var(--muted)');
+  vscode.postMessage({ command: 'get-pipeline-envs', copadoOrg: currentCopadoOrg, pipelineId, repoUri });
+}
+
+function refreshEnvs() {
+  if (currentPipelineId && currentCopadoOrg) {
+    showEnvsLoading();
+    vscode.postMessage({ command: 'get-pipeline-envs', copadoOrg: currentCopadoOrg, pipelineId: currentPipelineId });
+  } else if (currentCopadoOrg) {
+    loadPipelines();
+  }
+}
+
+function setPipelineStatus(msg) {
+  document.getElementById('pipelineStatus').textContent = msg;
+}
+
+function setRepoPathStatus(msg, color = 'var(--muted)') {
+  const el = document.getElementById('repoPathStatus');
+  el.textContent = msg;
+  el.style.color = color;
+}
+
+function populateSourceBranches(branches) {
+  const sel = document.getElementById('source');
+  sel.innerHTML = '';
+  if (!branches || branches.length === 0) {
+    sel.innerHTML = '<option value="">— no branches found —</option>';
+    sel.disabled = true;
+    return;
+  }
+  branches.forEach(b => {
+    const opt = document.createElement('option');
+    opt.value = b;
+    opt.textContent = b;
+    sel.appendChild(opt);
+  });
+  sel.disabled = false;
+  // Restore previously saved selection if still available
+  try {
+    const saved = localStorage.getItem('int-sync.sourceBranch');
+    if (saved && branches.includes(saved)) sel.value = saved;
+    else sel.value = branches[0];
+  } catch { sel.value = branches[0]; }
+}
+
+function showEnvsLoading() {
+  document.getElementById('targetList').innerHTML = `
+    <div class="org-loading">
+      <span class="dot dot-pulse" style="background:var(--muted)"></span>
+      <span style="color:var(--muted);font-size:12px">Loading environments…</span>
+    </div>`;
+}
+
+function filterEnvs(query) {
+  renderPipelineEnvs(allEnvs, query.toLowerCase().trim());
+}
+
+function renderPipelineEnvs(envs, filterQ = '') {
+  const list = document.getElementById('targetList');
+
+  if (!envs || envs.length === 0) {
+    list.innerHTML = `<div style="padding:8px 2px;color:var(--muted);font-size:12px">No environments found in this pipeline.</div>`;
+    return;
+  }
+
+  const filtered = filterQ
+    ? envs.filter(e => (e.name + e.alias + e.username + e.branch).toLowerCase().includes(filterQ))
+    : envs;
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div style="padding:8px 2px;color:var(--muted);font-size:12px">No environments match "${filterQ}"</div>`;
+    return;
+  }
+
+  // Sort: authenticated+INT → authenticated+other → not-in-CLI+INT → not-in-CLI+other
+  const sorted = [...filtered].sort((a, b) => {
+    const aIsInt = isIntOrg(a.alias, a.username);
+    const bIsInt = isIntOrg(b.alias, b.username);
+    const aTier  = (a.authenticated ? 0 : 2) + (aIsInt ? 0 : 1);
+    const bTier  = (b.authenticated ? 0 : 2) + (bIsInt ? 0 : 1);
+    if (aTier !== bTier) return aTier - bTier;
+    return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+  });
+
+  list.innerHTML = '';
+  sorted.forEach(env => list.appendChild(makeEnvChip(env)));
+}
+
+function makeEnvChip(env) {
+  const isInt  = isIntOrg(env.alias, env.username);
+  const isConn = /connected/i.test(env.connectedStatus);
+  const isExpd = /expired|error|invalid/i.test(env.connectedStatus);
+  const notCli = env.connectedStatus === 'Not in CLI';
+
+  const badgeClass = isConn ? 'badge-connected' : (notCli ? 'badge-unknown' : 'badge-expired');
+  const badgeText  = isConn ? '● connected'     : (notCli ? '✕ not in CLI' : '⚠ expired');
+
+  const sfAlias    = env.alias || env.name;
+  const hoverParts = [env.name, env.branch ? `⎇ ${env.branch}` : '', env.username].filter(Boolean);
+  const wasChecked = PREVIOUSLY_CHECKED ? PREVIOUSLY_CHECKED.includes(sfAlias) : isInt;
+
+  const chip = document.createElement('label');
+  chip.className = 'target-chip';
+  chip.title = hoverParts.join('\n');
+  chip.dataset.alias  = sfAlias;
+  chip.dataset.branch = env.branch;
+
+  chip.innerHTML = `
+    <div class="target-chip-row">
+      <input type="checkbox" name="target" value="${escHtml(sfAlias)}" ${wasChecked ? 'checked' : ''}>
+      <div class="target-chip-body">
+        <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+          <span class="target-name">${escHtml(env.name)}</span>
+          ${isInt ? '<span class="org-badge badge-int">INT</span>' : ''}
+          <span class="org-badge ${badgeClass}">${badgeText}</span>
+        </div>
+        ${env.branch  ? `<div class="org-username" style="color:#818cf8;margin-top:3px">⎇ ${escHtml(env.branch)}</div>` : ''}
+        ${env.username ? `<div class="org-username">${escHtml(env.username)}</div>` : ''}
+        ${!env.branch ? `
+        <div class="branch-row">
+          <label>Branch:</label>
+          <input class="branch-input" type="text" placeholder="git branch name" data-org="${escHtml(sfAlias)}">
+        </div>` : ''}
+      </div>
+    </div>
+  `;
+  return chip;
+}
+
+// Save checked state before sync so it persists after reload
+function saveCheckedState() {
+  const checked = [...document.querySelectorAll('input[name=target]:checked')].map(el => el.value);
+  try { localStorage.setItem('int-sync.checkedOrgs', JSON.stringify(checked)); } catch {}
+}
+
+// ── Message handler ───────────────────────────────────────
+window.addEventListener('message', (e) => {
+  const msg = e.data;
+  handleEvent(msg);
+});
+
+function handleEvent(msg) {
+  switch (msg.type) {
+
+    case 'config':
+      // repoPath intentionally not applied here — populated by repo-resolved event
+      if (msg.copadoOrg) {
+        document.getElementById('copadoOrg').value = msg.copadoOrg;
+        currentCopadoOrg = msg.copadoOrg;
+        loadPipelines();
+      }
+      break;
+
+    case 'pipelines': {
+      const recs = msg.records || [];
+      // Normalize records — extract nested git repo info
+      pipelineRecords = recs.map(r => ({
+        Id:       r.Id,
+        Name:     r.Name,
+        repoUri:  r.copado__Git_Repository__r?.copado__URI__c || '',
+        repoName: r.copado__Git_Repository__r?.Name || '',
+      }));
+      const sel = document.getElementById('pipelineSelect');
+      sel.innerHTML = '<option value="">— select a pipeline —</option>';
+      pipelineRecords.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r.Id;
+        opt.textContent = r.repoName ? `${r.Name}  (${r.repoName})` : r.Name;
+        sel.appendChild(opt);
+      });
+      sel.disabled = false;
+      setPipelineStatus(`${recs.length} pipeline${recs.length === 1 ? '' : 's'} found`);
+      if (recs.length === 1) { sel.value = recs[0].Id; onPipelineChange(); }
+      break;
+    }
+
+    case 'pipelines-error':
+      document.getElementById('pipelineSelect').disabled = false;
+      document.getElementById('pipelineSelect').innerHTML = '<option value="">— pipeline load failed —</option>';
+      setPipelineStatus(`⚠ ${msg.message}`);
+      break;
+
+    case 'pipeline-envs':
+      allEnvs = msg.envs || [];
+      renderPipelineEnvs(allEnvs);
+      if (msg.sourceBranches && msg.sourceBranches.length > 0) {
+        populateSourceBranches(msg.sourceBranches);
+      }
+      break;
+
+    case 'repo-resolved': {
+      const rp = msg.repoPath || '';
+      document.getElementById('repoPath').value = rp;
+      setRepoPathStatus('✓ found', 'var(--green)');
+      void vscode.postMessage({ command: 'save-repo-path', repoPath: rp });
+      break;
+    }
+
+    case 'repo-cloning':
+      setRepoPathStatus(`Cloning ${msg.repoName}…`, 'var(--yellow)');
+      break;
+
+    case 'repo-clone-progress':
+      setRepoPathStatus(String(msg.message || '').slice(0, 40), 'var(--muted)');
+      break;
+
+    case 'repo-clone-error':
+      setRepoPathStatus('⚠ clone failed — set path manually', 'var(--red)');
+      appendLog({ level: 'warn', message: msg.message, target: null });
+      break;
+
+    case 'pipeline-envs-error':
+      document.getElementById('targetList').innerHTML =
+        `<div style="padding:8px 2px;color:var(--red);font-size:12px">⚠ ${escHtml(msg.message)}</div>`;
+      break;
+
+    case 'org-list':
+      // fallback: not used in pipeline mode, kept for compatibility
+      break;
+
+    case 'org-list-error':
+      break;
+
+    case 'sync-start':
+      running = true;
+      conflictCount = 0;
+      updateStatus('running', `Syncing ${msg.targets.join(', ')}…`);
+      document.getElementById('syncBtn').disabled = true;
+      document.getElementById('abortBtn').disabled = false;
+      document.getElementById('abortBtn').style.display = 'block';
+      document.getElementById('syncBtn').style.display = 'none';
+      resetSteps();
+      clearLog();
+      clearSummary();
+      clearConflicts();
+      break;
+
+    case 'runner-ready':
+      appendLog({ level: 'info', message: `Runner ready — source: ${msg.source}, targets: ${msg.targets.join(', ')}`, target: null });
+      break;
+
+    case 'step-start':
+      setStep(msg.step, 'running', msg.title || '');
+      if (msg.target) appendLog({ level: 'info', message: `▶ Step ${msg.step}: ${msg.title}`, target: msg.target });
+      document.getElementById('currentStepLabel').textContent = `Step ${msg.step}: ${msg.title}`;
+      break;
+
+    case 'step-done':
+      setStep(msg.step, 'done');
+      setConnector(msg.step);
+      document.getElementById('currentStepLabel').textContent = `Step ${msg.step} ✓`;
+      break;
+
+    case 'step-error':
+      setStep(msg.step, 'error');
+      appendLog({ level: 'error', message: `✗ Step ${msg.step}: ${msg.message}`, target: msg.target });
+      break;
+
+    case 'log':
+      appendLog(msg);
+      break;
+
+    case 'conflicts-found':
+      appendLog({ level: 'warn', message: `Found ${msg.count} conflict(s) — resolving with content-first algorithm`, target: msg.target });
+      break;
+
+    case 'conflict-resolved':
+      appendLog({ level: 'info', message: `  Resolved: ${msg.file} → ${msg.winner} (${msg.rule})${msg.dropped > 0 ? ` ⚠ ${msg.dropped} sig drops` : ''}`, target: msg.target });
+      break;
+
+    case 'conflict-needs-review':
+      showConflictCard(msg);
+      break;
+
+    case 'sig-drop-warning':
+      appendLog({ level: 'warn', message: `  ⚠ Sig-drop in ${msg.file}: ${msg.droppedMembers.slice(0,3).join(', ')}${msg.droppedMembers.length > 3 ? '…' : ''}`, target: msg.target });
+      break;
+
+    case 'delta-computed':
+      appendLog({ level: 'info', message: `Delta: ${msg.upserts} upserts, ${msg.deletes} deletes`, target: msg.target });
+      break;
+
+    case 'deploy-start':
+      document.getElementById('deployTrack').style.display = 'flex';
+      break;
+
+    case 'deploy-stage':
+      setDeployStage(msg.stage);
+      break;
+
+    case 'deploy-gate-pass':
+      document.getElementById('ds-realDeploy').className = 'deploy-stage done';
+      appendLog({ level: 'info', message: '✅ GATE PASSED — proceeding to promote', target: msg.target });
+      break;
+
+    case 'deploy-gate-fail':
+      appendLog({ level: 'error', message: `❌ GATE FAILED — branch NOT promoted (exit ${msg.exitCode ?? '?'})`, target: msg.target });
+      break;
+
+    case 'promote-done':
+      appendLog({ level: 'info', message: `✅ Promoted ${msg.target} → ${(msg.newTip||'').slice(0,8)}`, target: msg.target });
+      break;
+
+    case 'target-done':
+      addTargetSummary(msg.target, msg.gatePass ? 'done' : 'error', msg);
+      break;
+
+    case 'target-fail':
+      addTargetSummary(msg.target, 'error', msg);
+      break;
+
+    case 'target-noop':
+      appendLog({ level: 'info', message: `Already up-to-date — nothing to sync`, target: msg.target });
+      addTargetSummary(msg.target, 'noop', msg);
+      break;
+
+    case 'target-skip':
+      appendLog({ level: 'warn', message: `SKIPPED: ${msg.reason}`, target: msg.target });
+      addTargetSummary(msg.target, 'skip', msg);
+      break;
+
+    case 'branch-cut':
+      appendLog({ level: 'info', message: `Staging: ${msg.stagingBranch} (cut from ${msg.intTip?.slice(0,8)})`, target: msg.target });
+      break;
+
+    case 'flagged-conflicts':
+      appendLog({ level: 'warn', message: `⚠ ${msg.count} flagged conflict(s) need review`, target: msg.target });
+      switchTab('conflicts');
+      break;
+
+    case 'all-done':
+      running = false;
+      updateStatus('done', 'Sync complete');
+      document.getElementById('syncBtn').disabled = false;
+      document.getElementById('syncBtn').style.display = 'block';
+      document.getElementById('abortBtn').style.display = 'none';
+      document.getElementById('currentStepLabel').textContent = 'All done';
+      switchTab('summary');
+      break;
+
+    case 'process-exit':
+      if (running) {
+        running = false;
+        updateStatus(msg.code === 0 ? 'done' : 'error', msg.code === 0 ? 'Complete' : `Exited: ${msg.code}`);
+        document.getElementById('syncBtn').disabled = false;
+        document.getElementById('syncBtn').style.display = 'block';
+        document.getElementById('abortBtn').style.display = 'none';
+      }
+      break;
+
+    case 'aborted':
+      running = false;
+      updateStatus('idle', 'Aborted');
+      document.getElementById('syncBtn').disabled = false;
+      document.getElementById('syncBtn').style.display = 'block';
+      document.getElementById('abortBtn').style.display = 'none';
+      appendLog({ level: 'warn', message: '— Sync aborted by user —', target: null });
+      break;
+
+    case 'fatal':
+      running = false;
+      updateStatus('error', 'Error');
+      document.getElementById('syncBtn').disabled = false;
+      document.getElementById('syncBtn').style.display = 'block';
+      document.getElementById('abortBtn').style.display = 'none';
+      appendLog({ level: 'error', message: `FATAL: ${msg.message}`, target: null });
+      break;
+
+    case 'error':
+      appendLog({ level: 'error', message: msg.message, target: null });
+      break;
+  }
+}
+
+// ── Commands ──────────────────────────────────────────────
+function startSync() {
+  const repoPath = document.getElementById('repoPath').value.trim();
+  const source   = document.getElementById('source').value;
+  const targets  = [...document.querySelectorAll('input[name=target]:checked')].map(el => el.value);
+
+  if (targets.length === 0) {
+    appendLog({ level: 'warn', message: 'Select at least one target', target: null });
+    switchTab('log');
+    return;
+  }
+
+  // Build branchMap: SF alias → git branch
+  // Priority 1: branch from pipeline env chip data-branch (Copado is authoritative)
+  // Priority 2: manual branch-input field (for envs with no Copado branch set)
+  const branchMap = {};
+
+  document.querySelectorAll('.target-chip').forEach(chip => {
+    const alias  = chip.dataset.alias;
+    const branch = chip.dataset.branch;
+    const cb = chip.querySelector('input[name=target]');
+    if (cb && cb.checked && alias && branch) {
+      branchMap[alias] = branch;
+    }
+  });
+
+  document.querySelectorAll('.branch-input').forEach(inp => {
+    const alias  = inp.dataset.org;
+    const branch = inp.value.trim();
+    if (alias && branch && targets.includes(alias) && !branchMap[alias]) {
+      branchMap[alias] = branch;
+    }
+  });
+
+  // Persist source branch selection
+  try { localStorage.setItem('int-sync.sourceBranch', source); } catch {}
+
+  saveCheckedState();
+  vscode.postMessage({ command: 'save-repo-path', repoPath });
+  vscode.postMessage({ command: 'sync', source, targets, repoPath, branchMap });
+}
+
+function abortSync() {
+  vscode.postMessage({ command: 'abort' });
+  document.getElementById('abortBtn').disabled = true;
+}
+
+// ── Log ───────────────────────────────────────────────────
+function clearLog() {
+  const pane = document.getElementById('logPane');
+  pane.innerHTML = '';
+  logEmpty = false;
+}
+
+function appendLog(msg) {
+  if (logEmpty) {
+    document.getElementById('logEmpty').remove();
+    logEmpty = false;
+  }
+  const pane = document.getElementById('logPane');
+  const div = document.createElement('div');
+  div.className = `log-line ${msg.level || 'info'}`;
+
+  const now = new Date().toLocaleTimeString('en-US', { hour12: false });
+  div.innerHTML = `<span class="log-time">${now}</span>` +
+    (msg.target ? `<span class="log-tgt">${msg.target}</span>` : '') +
+    `<span class="log-msg">${msg.html ? (msg.message || '') : escHtml(msg.message || '')}</span>`;
+
+  pane.appendChild(div);
+  pane.scrollTop = pane.scrollHeight;
+}
+
+// ── Steps ─────────────────────────────────────────────────
+function resetSteps() {
+  for (let i = 1; i <= 7; i++) {
+    const el = document.getElementById(`step${i}`);
+    if (el) el.className = 'step-bubble';
+    const conn = document.getElementById(`conn${i}-${i+1}`);
+    if (conn) conn.className = 'step-connector';
+  }
+  document.getElementById('currentStepLabel').textContent = '';
+  // Reset deploy track
+  document.getElementById('deployTrack').style.display = 'none';
+  ['labels','schema','recordTypes','apex','checkOnly','realDeploy'].forEach(s => {
+    const el = document.getElementById(`ds-${s}`);
+    if (el) el.className = 'deploy-stage';
+  });
+}
+
+function setStep(step, state, title = '') {
+  const el = document.getElementById(`step${step}`);
+  if (el) {
+    el.className = `step-bubble ${state}`;
+    if (title) el.title = title;
+  }
+}
+
+function setConnector(fromStep) {
+  const el = document.getElementById(`conn${fromStep}-${fromStep+1}`);
+  if (el) el.className = 'step-connector done';
+}
+
+// ── Deploy stages ─────────────────────────────────────────
+const STAGE_ORDER = ['labels','schema','recordTypes','apex','checkOnly','realDeploy'];
+let activeStageIdx = -1;
+
+function setDeployStage(stage) {
+  const idx = STAGE_ORDER.indexOf(stage);
+  if (idx < 0) return;
+  // Mark previous stages done
+  for (let i = 0; i < idx; i++) {
+    const el = document.getElementById(`ds-${STAGE_ORDER[i]}`);
+    if (el && !el.classList.contains('error')) el.className = 'deploy-stage done';
+  }
+  const el = document.getElementById(`ds-${stage}`);
+  if (el) el.className = 'deploy-stage active';
+  activeStageIdx = idx;
+}
+
+// ── Tabs ──────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    const names = ['log', 'conflicts', 'summary'];
+    t.classList.toggle('active', names[i] === name);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`panel-${name}`)?.classList.add('active');
+}
+
+// ── Status ────────────────────────────────────────────────
+function updateStatus(state, text) {
+  const pill = document.getElementById('globalStatus');
+  pill.className = `status-pill pill-${state === 'running' ? 'running' : state === 'done' ? 'done' : state === 'error' ? 'error' : 'idle'}`;
+  const dot = pill.querySelector('.dot');
+  dot.classList.toggle('dot-pulse', state === 'running');
+  pill.querySelector('span').textContent = text;
+}
+
+// ── Conflicts ─────────────────────────────────────────────
+function clearConflicts() {
+  conflictCount = 0;
+  pendingConflicts = {};
+  document.getElementById('conflictsPane').innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div>No conflicts requiring manual review</div></div>`;
+  document.getElementById('conflictBadge').classList.add('hidden');
+  document.getElementById('conflictBadge').textContent = '0';
+}
+
+function showConflictCard(msg) {
+  // Remove empty state if present
+  const pane = document.getElementById('conflictsPane');
+  const emptyEl = pane.querySelector('.empty-state');
+  if (emptyEl) emptyEl.remove();
+
+  conflictCount++;
+  document.getElementById('conflictBadge').textContent = conflictCount;
+  document.getElementById('conflictBadge').classList.remove('hidden');
+
+  const card = document.createElement('div');
+  card.className = 'conflict-card fade-in';
+  card.dataset.file = msg.file;
+  card.dataset.target = msg.target;
+
+  const srcDateStr = msg.srcDate ? ` (${msg.srcDate.slice(0,10)})` : '';
+  const intDateStr = msg.intDate ? ` (${msg.intDate.slice(0,10)})` : '';
+  const fallback = msg.unattendedWinner === 'source' ? 'source' : 'INT';
+
+  card.innerHTML = `
+    <div class="conflict-header">
+      <span class="conflict-file">${escHtml(msg.file)}</span>
+      <span style="font-size:11px;color:var(--muted)">target: ${escHtml(msg.target)}</span>
+    </div>
+    <div class="diff-grid">
+      <div class="diff-side">
+        <div class="diff-side-label">INT (ours)${intDateStr}</div>
+        ${escHtml((msg.intContent || '').slice(0, 4000))}
+      </div>
+      <div class="diff-side">
+        <div class="diff-side-label">Source${srcDateStr}</div>
+        ${escHtml((msg.srcContent || '').slice(0, 4000))}
+      </div>
+    </div>
+    <div class="conflict-actions">
+      <span style="font-size:11px;color:var(--muted);flex:1">Unattended fallback: <strong>${fallback}</strong> wins (newer real commit)</span>
+      <button class="btn btn-sm" style="background:rgba(59,130,246,0.2);color:var(--blue);border:1px solid var(--blue)" onclick="resolveConflict(this,'int')">Keep INT</button>
+      <button class="btn btn-sm" style="background:rgba(99,102,241,0.2);color:var(--accent);border:1px solid var(--accent)" onclick="resolveConflict(this,'source')">Take Source</button>
+    </div>
+  `;
+
+  pendingConflicts[`${msg.target}::${msg.file}`] = card;
+  pane.appendChild(card);
+}
+
+function resolveConflict(btn, resolution) {
+  const card = btn.closest('.conflict-card');
+  const file   = card.dataset.file;
+  const target = card.dataset.target;
+
+  vscode.postMessage({ command: 'resolve-conflict', file, resolution, target });
+
+  // Mark as resolved in UI
+  const actionsRow = card.querySelector('.conflict-actions');
+  actionsRow.innerHTML = `<span class="conflict-resolved">✅ Resolved: ${resolution === 'source' ? 'Taking source' : 'Keeping INT'}</span>`;
+
+  conflictCount = Math.max(0, conflictCount - 1);
+  document.getElementById('conflictBadge').textContent = conflictCount;
+  if (conflictCount === 0) document.getElementById('conflictBadge').classList.add('hidden');
+
+  delete pendingConflicts[`${target}::${file}`];
+}
+
+// ── Summary ───────────────────────────────────────────────
+function clearSummary() {
+  document.getElementById('summaryPane').innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div>Summary appears after each target completes</div></div>`;
+}
+
+function addTargetSummary(target, status, msg) {
+  const pane = document.getElementById('summaryPane');
+  const emptyEl = pane.querySelector('.empty-state');
+  if (emptyEl) emptyEl.remove();
+
+  const icons = { done: '✅', error: '❌', noop: '⏭', skip: '⚠️' };
+  const colors = { done: 'var(--green)', error: 'var(--red)', noop: 'var(--muted)', skip: 'var(--yellow)' };
+  const labels = { done: 'Synced & promoted', error: 'Failed — not promoted', noop: 'Already up-to-date', skip: 'Skipped' };
+
+  const card = document.createElement('div');
+  card.className = 'target-card fade-in';
+  card.innerHTML = `
+    <div class="target-card-header">
+      <span class="status-icon">${icons[status] || '?'}</span>
+      <span class="target-card-title">${escHtml(target)}</span>
+      <span style="margin-left:auto;font-size:12px;color:${colors[status]}">${labels[status] || status}</span>
+    </div>
+    <div class="target-card-body">
+      ${msg.newTip ? `<div class="detail-row"><span>New tip:</span><span class="detail-val" style="font-family:var(--font-mono)">${msg.newTip.slice(0,12)}</span></div>` : ''}
+      ${msg.reason ? `<div class="detail-row"><span>Reason:</span><span class="detail-val">${escHtml(msg.reason)}</span></div>` : ''}
+    </div>
+  `;
+  pane.appendChild(card);
+}
+
+// ── Utils ─────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+</script>
+</body>
+</html>
