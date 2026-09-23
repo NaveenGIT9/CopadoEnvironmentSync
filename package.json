@@ -1,9 +1,14 @@
 {
-  "name": "int-sync",
-  "displayName": "Copado INT Sync",
-  "description": "Deploy-gated forward integration: sync INT sandboxes from QA/UAT without Copado back promotion",
+  "name": "copado-env-sync",
+  "displayName": "Copado Environment Sync",
+  "description": "Deploy-gated forward integration for Copado pipelines — syncs Salesforce environments via real org deploy as gate before branch promotion.",
   "version": "1.0.0",
   "publisher": "NaveenBonthu9",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NaveenGIT9/CopadoEnvironmentSync.git"
+  },
+  "license": "MIT",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -14,33 +19,28 @@
     "commands": [
       {
         "command": "int-sync.open",
-        "title": "Copado INT Sync: Open Dashboard"
+        "title": "Copado Environment Sync: Open Dashboard"
       }
     ],
     "configuration": {
-      "title": "Copado INT Sync",
+      "title": "Copado Environment Sync",
       "properties": {
         "int-sync.repoPath": {
           "type": "string",
           "default": "",
-          "description": "Absolute path to the rbk-sfdx-release repo clone (e.g. D:\\RubrikRepoVDI\\rbk-sfdx-release)"
+          "description": "Absolute path to your Salesforce repo clone"
         },
         "int-sync.scriptsPath": {
           "type": "string",
           "default": "",
-          "description": "Path to INT sync Python scripts. Leave blank to auto-resolve from repoPath/.claude/skills/copado-int-sync/scripts"
-        },
-        "int-sync.defaultSource": {
-          "type": "string",
-          "enum": ["rbkqa", "rbkuat"],
-          "default": "rbkqa",
-          "description": "Default source branch for syncs"
+          "description": "Path to copado-int-sync Python scripts. Leave blank to auto-resolve from repoPath/.claude/skills/copado-int-sync/scripts"
         }
       }
     }
   },
   "scripts": {
-    "build": "npx tsc -p tsconfig.json"
+    "build": "npx tsc -p tsconfig.json",
+    "package": "npm run build && vsce package"
   },
   "devDependencies": {
     "@types/node": "^18",

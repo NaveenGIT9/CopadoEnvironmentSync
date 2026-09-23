@@ -1,0 +1,8 @@
+.vscode/
+.gitignore
+tsconfig.json
+extension.ts
+panel.ts
+**/*.ts
+!**/*.d.ts
+node_modules/

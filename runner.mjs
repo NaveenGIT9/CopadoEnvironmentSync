@@ -75,6 +75,7 @@ function parseArgs(argv) {
     targets:    (args.targets     || 'rbkintcsad').split(',').map(s => s.trim()).filter(Boolean),
     repoPath:    args['repo-path']  || '',
     scriptsPath: args['scripts-path'] || '',
+    previewOnly: args['preview-only'] === 'true',
   };
 }
 
@@ -118,7 +119,7 @@ rl.on('line', (line) => {
       const resolver = pendingResolves.get(key);
       if (resolver) {
         pendingResolves.delete(key);
-        resolver(cmd.resolution); // 'source' | 'int'
+        resolver({ type: cmd.resolution, content: cmd.content }); // type: 'source'|'int'|'custom'
       }
     }
   } catch { /* ignore malformed */ }
@@ -301,7 +302,8 @@ async function resolveConflicts(wt, source, branch, target) {
     const srcContent  = gitShow(wt, 3, file);
 
     let rule = null;
-    let winner = null; // 'source' or 'int'
+    let winner = null; // 'source', 'int', or 'custom'
+    let customContent;  // set when winner === 'custom'
 
     // Rule 1: Byte-identical
     if (intContent === srcContent) {
@@ -327,7 +329,7 @@ async function resolveConflicts(wt, source, branch, target) {
       // INT ⊇ source: source added nothing INT lacks
       if (srcAdded.every(l => intSet.has(l))) {
         winner = 'int';
-        rule = 'int-superset';
+        rule = 'target-superset';
       }
       // Source ⊇ INT: INT added nothing source lacks
       else if (intAdded.every(l => srcSet.has(l))) {
@@ -352,7 +354,7 @@ async function resolveConflicts(wt, source, branch, target) {
 
         const unattendedWinner = (!intDate || (srcDate && srcDate > intDate)) ? 'source' : 'int';
 
-        // Emit to panel for review
+        // Emit to panel for human review — runner waits indefinitely until resolved
         emit({
           type: 'conflict-needs-review',
           file,
@@ -365,14 +367,19 @@ async function resolveConflicts(wt, source, branch, target) {
           unattendedWinner,
         });
 
-        // Wait for panel to send resolution (with 5-minute timeout → unattended fallback)
-        let resolution = unattendedWinner;
+        // Wait indefinitely — human MUST resolve this conflict; no auto-fallback
+        let resolution = unattendedWinner; // shown as UI hint only, never auto-applied
         try {
-          const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(unattendedWinner), 300_000));
-          resolution = await Promise.race([waitForResolve(file, target), timeoutPromise]);
-        } catch { resolution = unattendedWinner; }
+          const resolved = await waitForResolve(file, target);
+          if (typeof resolved === 'object' && resolved !== null) {
+            resolution = resolved.type;       // 'source' | 'int' | 'custom'
+            customContent = resolved.content; // defined only for 'custom'
+          } else {
+            resolution = resolved;
+          }
+        } catch { resolution = unattendedWinner; } // only fires if process is killed
 
-        winner = resolution;
+        winner = resolution; // 'source', 'int', or 'custom'
         rule = `divergent→${winner}(FLAGGED)`;
         flagged.push({ file, resolution: winner });
       }
@@ -381,15 +388,21 @@ async function resolveConflicts(wt, source, branch, target) {
     // Apply the resolution
     if (winner === 'source') {
       gitSafe(wt, 'checkout', 'MERGE_HEAD', '--', file);
-    } else {
+    } else if (winner === 'int') {
       gitSafe(wt, 'checkout', 'HEAD', '--', file);
+    } else if (winner === 'custom' && customContent !== undefined) {
+      writeFileSync(join(wt, file), customContent);
+    } else {
+      gitSafe(wt, 'checkout', 'HEAD', '--', file); // safe fallback: keep target
     }
 
     // Signature-drop guard on sensitive types
     let droppedMembers = [];
     if (isSensitivePath(file)) {
       const loserContent  = winner === 'source' ? intContent : srcContent;
-      const winnerContent = winner === 'source' ? srcContent : intContent;
+      const winnerContent = winner === 'source' ? srcContent
+                          : winner === 'custom' && customContent !== undefined ? customContent
+                          : intContent;
       droppedMembers = droppedSignatures(winnerContent, loserContent);
       if (droppedMembers.length > 0) {
         flagged.push({ file, rule, droppedMembers });
@@ -408,7 +421,8 @@ async function resolveConflicts(wt, source, branch, target) {
       target,
     });
 
-    log(`  ${rule}: ${file} → ${winner}`, 'info', target);
+    const winnerLabel = winner === 'int' ? target : winner === 'source' ? source : 'custom-merge';
+    log(`  ${rule}: ${file} → ${winnerLabel}`, 'info', target);
   }
 
   return { flagged };
@@ -707,15 +721,23 @@ async function runDirectDeploy(wt, alias, tmpDir, target) {
     } else {
       // ── Failure path ──────────────────────────────────────────────────────
       const deployMsg = parsed?.message || parsed?.result?.message || '';
-      if (deployMsg) log(`Deploy error: ${deployMsg}`, 'error', target);
-      const failures = parsed?.result?.details?.componentFailures ?? [];
-      const failArr  = Array.isArray(failures) ? failures : [failures];
-      for (const f of failArr.slice(0, 20)) {
-        log(`  ✗ ${f.type}:${f.fullName} — ${f.problem}`, 'error', target);
-      }
-      if (failArr.length > 20) log(`  … and ${failArr.length - 20} more failures`, 'error', target);
-      if (!failArr.length && !deployMsg && result_stdout.trim()) {
-        log(result_stdout.trim().slice(0, 2000), 'error', target);
+
+      // "No local changes to deploy" means the org already has these exact files —
+      // the target is already in sync with source. Treat as gate PASS.
+      if (/no local changes to deploy/i.test(deployMsg) || /no local changes to deploy/i.test(result_stdout)) {
+        log(`Org already up to date — no changes to deploy (gate PASS)`, 'success', target);
+        gatePass = true;
+      } else {
+        if (deployMsg) log(`Deploy error: ${deployMsg}`, 'error', target);
+        const failures = parsed?.result?.details?.componentFailures ?? [];
+        const failArr  = Array.isArray(failures) ? failures : [failures];
+        for (const f of failArr.slice(0, 20)) {
+          log(`  ✗ ${f.type}:${f.fullName} — ${f.problem}`, 'error', target);
+        }
+        if (failArr.length > 20) log(`  … and ${failArr.length - 20} more failures`, 'error', target);
+        if (!failArr.length && !deployMsg && result_stdout.trim()) {
+          log(result_stdout.trim().slice(0, 2000), 'error', target);
+        }
       }
     }
   } catch {
@@ -959,9 +981,29 @@ async function globalPreflight(repoPath) {
   return currentBranch;
 }
 
+// ── Preview diff (remote refs only) ──────────────────────────────────────────
+
+async function runPreviewDiff(source, targets, repoPath) {
+  const previews = {};
+  for (const t of targets) {
+    const orgCfg = lookupOrg(t);
+    if (!orgCfg) {
+      previews[t] = { error: `No org mapping for "${t}"` };
+      continue;
+    }
+    const { branch } = orgCfg;
+    // Always use origin/ refs — never local branches which may be out of sync with remote
+    const diffRaw = gitSafe(repoPath, 'diff', '--name-only',
+      `origin/${branch}..origin/${source}`, '--', 'force-app/**');
+    const files = diffRaw.split('\n').filter(Boolean);
+    previews[t] = { branch, files };
+  }
+  emit({ type: 'preview-result', previews, source, targets });
+}
+
 // ── Entry point ───────────────────────────────────────────────────────────────
 
-const { source, targets, repoPath, scriptsPath } = parseArgs(process.argv);
+const { source, targets, repoPath, scriptsPath, previewOnly } = parseArgs(process.argv);
 
 if (!repoPath || !existsSync(repoPath)) {
   emit({ type: 'fatal', message: `Repo path does not exist: ${repoPath}` });
@@ -972,7 +1014,12 @@ if (!repoPath || !existsSync(repoPath)) {
   try {
     emit({ type: 'runner-ready', source, targets, repoPath, scriptsPath });
 
-    await globalPreflight(repoPath);
+    await globalPreflight(repoPath); // always fetch so preview uses fresh remote refs
+
+    if (previewOnly) {
+      await runPreviewDiff(source, targets, repoPath);
+      return;
+    }
 
     for (const t of targets) {
       await syncTarget(source, t, repoPath, scriptsPath);

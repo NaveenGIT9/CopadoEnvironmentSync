@@ -86,6 +86,9 @@ export class IntSyncPanel {
   private pipelineRepoUri  = '';
   private pipelineRepoName = '';
 
+  // Pending sync args — populated by preview, consumed by confirm-sync
+  private pendingSyncArgs: { source: string; targets: string[]; repoPath: string; branchMap: Record<string, string> } | null = null;
+
   public static createOrShow(extensionUri: vscode.Uri, context: vscode.ExtensionContext): void {
     if (IntSyncPanel.currentPanel) {
       IntSyncPanel.currentPanel.panel.reveal(vscode.ViewColumn.One);
@@ -119,22 +122,32 @@ export class IntSyncPanel {
     repoUri?: string;
     file?: string;
     resolution?: string;
+    content?: string;
     target?: string;
   }): void {
     if (msg.command === 'sync') {
-      this.runSync(
-        msg.source ?? 'rbkqa',
-        msg.targets ?? ['rbkintcsad'],
-        msg.repoPath ?? '',
-        msg.branchMap ?? {}
-      );
+      this.pendingSyncArgs = {
+        source:    msg.source    ?? 'rbkqa',
+        targets:   msg.targets   ?? ['rbkintcsad'],
+        repoPath:  msg.repoPath  ?? '',
+        branchMap: msg.branchMap ?? {},
+      };
+      this.runPreview(this.pendingSyncArgs);
+    } else if (msg.command === 'confirm-sync') {
+      if (this.pendingSyncArgs) {
+        const a = this.pendingSyncArgs;
+        this.pendingSyncArgs = null;
+        this.runSync(a.source, a.targets, a.repoPath, a.branchMap);
+      }
+    } else if (msg.command === 'cancel-preview') {
+      this.pendingSyncArgs = null;
     } else if (msg.command === 'resolve-conflict') {
-      this.sendToRunner({ command: 'resolve-conflict', file: msg.file, resolution: msg.resolution, target: msg.target });
+      this.sendToRunner({ command: 'resolve-conflict', file: msg.file, resolution: msg.resolution, target: msg.target, content: msg.content });
     } else if (msg.command === 'abort') {
       this.abortRun();
     } else if (msg.command === 'get-config') {
-      const source = vscode.workspace.getConfiguration('int-sync').get<string>('defaultSource', 'rbkqa');
-      const copadoOrg = this.context.globalState.get<string>('int-sync.copadoOrg', '');
+      const source = vscode.workspace.getConfiguration('int-sync').get<string>('defaultSource', '');
+      const copadoOrg = this.getDefaultOrg();
       const history = this.context.globalState.get<string[]>('int-sync.repoHistory', []);
       // repoPath is intentionally omitted — repo path is now driven by pipeline selection
       this.post({ type: 'config', source, copadoOrg, history });
@@ -412,6 +425,57 @@ export class IntSyncPanel {
     });
   }
 
+  private runPreview(args: { source: string; targets: string[]; repoPath: string; branchMap: Record<string, string> }): void {
+    const { source, targets, repoPath, branchMap } = args;
+    const resolvedRepo = repoPath || getRepoPath(this.context);
+    if (!resolvedRepo || !fs.existsSync(resolvedRepo)) {
+      this.post({ type: 'error', message: `Repo path does not exist: ${resolvedRepo || '(none)'}` });
+      return;
+    }
+    const scriptsPath = getScriptsPath(resolvedRepo);
+
+    const runnerArgs = [
+      RUNNER_PATH,
+      '--source', source,
+      '--targets', targets.join(','),
+      '--repo-path', resolvedRepo,
+      '--scripts-path', scriptsPath,
+      '--preview-only', 'true',
+    ];
+    const mapEntries = Object.entries(branchMap);
+    if (mapEntries.length > 0) {
+      runnerArgs.push('--branch-map', mapEntries.map(([a, b]) => `${a}:${b}`).join(','));
+    }
+
+    this.post({ type: 'preview-loading', source, targets });
+
+    const proc = spawn(NODE_EXEC_PATH, runnerArgs, {
+      shell: false,
+      env: { ...process.env, NODE_NO_WARNINGS: '1' },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    let buf = '';
+    proc.stdout.on('data', (chunk: Buffer) => {
+      buf += chunk.toString();
+      const lines = buf.split('\n');
+      buf = lines.pop() ?? '';
+      for (const line of lines.filter(l => l.trim())) {
+        try {
+          const evt = JSON.parse(line) as Record<string, unknown>;
+          if (evt.type === 'preview-result' || evt.type === 'fatal') {
+            this.post(evt);
+          }
+        } catch { /* ignore malformed */ }
+      }
+    });
+    proc.on('close', (code) => {
+      if (code !== 0) {
+        this.post({ type: 'preview-error', message: `Preview exited with code ${code}` });
+      }
+    });
+  }
+
   private runSync(source: string, targets: string[], repoPath: string, branchMap: Record<string, string> = {}): void {
     if (this.activeProc) {
       this.post({ type: 'error', message: 'A sync is already running. Abort it first.' });
@@ -507,15 +571,45 @@ export class IntSyncPanel {
     void this.panel.webview.postMessage(data);
   }
 
+  private getDefaultOrg(): string {
+    const workspacePaths = (vscode.workspace.workspaceFolders ?? []).map(f => f.uri.fsPath);
+    const candidates = [
+      ...workspacePaths.map(p => path.join(p, '.sf', 'config.json')),
+      path.join(process.cwd(), '.sf', 'config.json'),
+      path.join(os.homedir(), '.sf', 'config.json'),
+      path.join(os.homedir(), '.sfdx', 'sfdx-config.json'),
+    ];
+    for (const p of candidates) {
+      try {
+        if (!fs.existsSync(p)) continue;
+        const cfg = JSON.parse(fs.readFileSync(p, 'utf8')) as Record<string, string>;
+        const val = cfg['target-org'] ?? cfg['defaultusername'] ?? '';
+        if (val) return val;
+      } catch { /* try next */ }
+    }
+    try {
+      const result = spawnSync('sf', ['config', 'get', 'target-org', '--json'], {
+        timeout: 20_000, encoding: 'utf8', shell: true,
+      });
+      const parsed = JSON.parse(result.stdout ?? '') as { result?: Array<{ value?: string }> };
+      const val = parsed?.result?.[0]?.value ?? '';
+      if (val) return val;
+    } catch { /* give up */ }
+    return '';
+  }
+
   private getHtml(extensionUri: vscode.Uri): string {
     const htmlPath = path.join(__dirname, '..', 'webview', 'index.html');
     if (fs.existsSync(htmlPath)) {
-      return fs.readFileSync(htmlPath, 'utf8');
+      let html = fs.readFileSync(htmlPath, 'utf8');
+      const defaultOrg = this.getDefaultOrg();
+      // Inject default org so the Copado org field is pre-filled on open
+      html = html.replace('<script>', `<script>window.__defaultOrg = ${JSON.stringify(defaultOrg)};\n`);
+      return html;
     }
-    // Fallback skeleton shown before the webview is built
-    return `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>INT Sync</title>
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Copado Environment Sync</title>
     <style>body{font-family:system-ui;padding:24px;background:#1e1e2e;color:#cdd6f4}</style>
-    </head><body><h2>Copado INT Sync</h2><p>webview/index.html not found — run npm run build</p></body></html>`;
+    </head><body><h2>Copado Environment Sync</h2><p>webview/index.html not found — run npm run build</p></body></html>`;
   }
 
   public dispose(): void {

@@ -413,6 +413,79 @@ select:focus, input[type="text"]:focus {
   border-top: 1px solid var(--border);
   background: var(--surface2);
 }
+/* ── Conflict badge pulse ────────────────────────────────── */
+.tab-badge-urgent { animation: badge-pulse 0.9s ease-in-out infinite; }
+@keyframes badge-pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.6;transform:scale(1.25)} }
+
+/* ── 3-panel resolve layout ──────────────────────────────── */
+.resolve-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border-top: 1px solid var(--border);
+}
+.resolve-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+}
+.resolve-panel:last-child { border-right: none; }
+.resolve-panel-hdr {
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+}
+.rp-target { background: rgba(244,63,94,0.12); color: var(--red); }
+.rp-middle { background: rgba(34,197,94,0.12);  color: var(--green); }
+.rp-source { background: rgba(99,102,241,0.12); color: var(--accent); }
+.resolve-panel-body {
+  flex: 1;
+  overflow: auto;
+  padding: 8px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.55;
+  background: var(--bg);
+}
+.resolve-textarea {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  border: none;
+  outline: none;
+  padding: 8px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.55;
+  resize: none;
+}
+.panel-removed { display: block; background: rgba(244,63,94,0.2); white-space: pre-wrap; word-break: break-all; min-height: 1.4em; margin: 0 -10px; padding: 0 10px; }
+.panel-added   { display: block; background: rgba(34,197,94,0.2); white-space: pre-wrap; word-break: break-all; min-height: 1.4em; margin: 0 -10px; padding: 0 10px; }
+.panel-same    { display: block; white-space: pre-wrap; word-break: break-all; min-height: 1.4em; }
+
+/* ── Merge editor textarea ───────────────────────────────── */
+.merge-textarea {
+  width: 100%;
+  height: 400px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
 .sig-drop-warning {
   background: rgba(234,179,8,0.1);
   border: 1px solid rgba(234,179,8,0.3);
@@ -477,6 +550,125 @@ select:focus, input[type="text"]:focus {
 /* ── Fade-in animations ─────────────────────────────────── */
 .fade-in { animation: fadeIn 0.2s ease-out; }
 @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+
+/* ── Approval modal ─────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.modal-overlay[hidden] { display: none !important; }
+.modal-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  width: 100%;
+  max-width: 540px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+}
+.modal-header {
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.modal-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.modal-subtitle { font-size: 12px; color: var(--muted); }
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.preview-target-block {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  overflow: hidden;
+}
+.preview-target-hdr {
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  gap: 8px;
+}
+.preview-target-name { font-size: 12px; font-weight: 700; color: var(--accent); font-family: var(--font-mono); }
+.preview-count-badge {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 99px;
+  background: rgba(99,102,241,0.15);
+  color: var(--accent);
+  border: 1px solid rgba(99,102,241,0.3);
+  font-weight: 600;
+}
+.preview-empty-badge {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 99px;
+  background: rgba(34,197,94,0.1);
+  color: var(--green);
+  border: 1px solid rgba(34,197,94,0.3);
+}
+.preview-error-badge {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 99px;
+  background: rgba(244,63,94,0.1);
+  color: var(--red);
+  border: 1px solid rgba(244,63,94,0.3);
+}
+.preview-type-group { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.preview-type-group:last-child { border-bottom: none; }
+.preview-type-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 5px;
+  font-family: var(--font-mono);
+}
+.preview-names {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.preview-name-chip {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 7px;
+  color: var(--text);
+}
+.preview-more { font-size: 11px; color: var(--muted); padding: 2px 4px; }
+.modal-footer {
+  padding: 12px 18px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+.preview-loading-msg { color: var(--muted); font-size: 12px; padding: 8px 0; }
 </style>
 </head>
 <body>
@@ -509,7 +701,7 @@ select:focus, input[type="text"]:focus {
     <div class="config-row">
       <div class="config-label">Copado org <span style="font-size:9px;color:var(--muted)">(pipeline source)</span></div>
       <div style="display:flex;gap:4px">
-        <input type="text" id="copadoOrg" placeholder="rbkqa" style="flex:1" />
+        <input type="text" id="copadoOrg" placeholder="auto-detected from SF CLI" style="flex:1" />
         <button onclick="loadPipelines()" title="Query pipelines from this org"
           style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:5px 10px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;flex-shrink:0">
           Load
@@ -676,6 +868,9 @@ let conflictCount = 0;
 let pendingConflicts = {}; // file → card element
 let targetStates = {}; // branch → {status, steps, ...}
 let logEmpty = true;
+let currentSource = ''; // tracked from sync-start so conflict cards can label it
+const conflictContents = {}; // 'target::file' → { intContent, srcContent, targetLabel, sourceLabel }
+let mergeEditorCtx = null;   // { file, target } while merge editor modal is open
 
 // ── Boot ──────────────────────────────────────────────────
 vscode.postMessage({ command: 'get-config' });
@@ -687,6 +882,12 @@ let allEnvs = [];          // pipeline envs from Copado
 let currentCopadoOrg = '';
 let currentPipelineId = '';
 let pipelineRecords = [];  // [{Id, Name, repoUri, repoName}]
+
+// Pre-fill Copado org from VS Code default SF org (injected by panel.ts at load time)
+if (window.__defaultOrg) {
+  document.getElementById('copadoOrg').value = window.__defaultOrg;
+  currentCopadoOrg = window.__defaultOrg;
+}
 
 function isIntOrg(alias = '', username = '') {
   return INT_PATTERNS.some(re => re.test(alias) || re.test(username));
@@ -944,9 +1145,28 @@ function handleEvent(msg) {
     case 'org-list-error':
       break;
 
+    case 'preview-loading':
+      document.getElementById('syncBtn').disabled = true;
+      document.getElementById('syncBtn').textContent = 'Fetching preview…';
+      break;
+
+    case 'preview-result':
+      document.getElementById('syncBtn').disabled = false;
+      document.getElementById('syncBtn').textContent = 'Start Sync';
+      showPreviewModal(msg);
+      break;
+
+    case 'preview-error':
+      document.getElementById('syncBtn').disabled = false;
+      document.getElementById('syncBtn').textContent = 'Start Sync';
+      appendLog({ level: 'error', message: `Preview failed: ${msg.message}`, target: null });
+      switchTab('log');
+      break;
+
     case 'sync-start':
       running = true;
       conflictCount = 0;
+      currentSource = msg.source || '';
       updateStatus('running', `Syncing ${msg.targets.join(', ')}…`);
       document.getElementById('syncBtn').disabled = true;
       document.getElementById('abortBtn').disabled = false;
@@ -1222,6 +1442,10 @@ function switchTab(name) {
   });
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.getElementById(`panel-${name}`)?.classList.add('active');
+  // User acknowledged the conflicts — stop badge pulsing
+  if (name === 'conflicts') {
+    document.getElementById('conflictBadge').classList.remove('tab-badge-urgent');
+  }
 }
 
 // ── Status ────────────────────────────────────────────────
@@ -1237,13 +1461,14 @@ function updateStatus(state, text) {
 function clearConflicts() {
   conflictCount = 0;
   pendingConflicts = {};
+  for (const k of Object.keys(conflictContents)) delete conflictContents[k];
   document.getElementById('conflictsPane').innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div>No conflicts requiring manual review</div></div>`;
+  document.getElementById('conflictBadge').classList.remove('tab-badge-urgent');
   document.getElementById('conflictBadge').classList.add('hidden');
   document.getElementById('conflictBadge').textContent = '0';
 }
 
 function showConflictCard(msg) {
-  // Remove empty state if present
   const pane = document.getElementById('conflictsPane');
   const emptyEl = pane.querySelector('.empty-state');
   if (emptyEl) emptyEl.remove();
@@ -1257,52 +1482,47 @@ function showConflictCard(msg) {
   card.dataset.file = msg.file;
   card.dataset.target = msg.target;
 
-  const srcDateStr = msg.srcDate ? ` (${msg.srcDate.slice(0,10)})` : '';
-  const intDateStr = msg.intDate ? ` (${msg.intDate.slice(0,10)})` : '';
-  const fallback = msg.unattendedWinner === 'source' ? 'source' : 'INT';
+  const targetLabel = msg.target || 'target';
+  const sourceLabel = currentSource || 'source';
+  const srcDateStr  = msg.srcDate ? msg.srcDate.slice(0,10) : '';
+  const intDateStr  = msg.intDate ? msg.intDate.slice(0,10) : '';
+
+  const ck = `${msg.target}::${msg.file}`;
+  conflictContents[ck] = {
+    intContent: msg.intContent || '',
+    srcContent: msg.srcContent || '',
+    targetLabel,
+    sourceLabel,
+  };
 
   card.innerHTML = `
     <div class="conflict-header">
       <span class="conflict-file">${escHtml(msg.file)}</span>
-      <span style="font-size:11px;color:var(--muted)">target: ${escHtml(msg.target)}</span>
-    </div>
-    <div class="diff-grid">
-      <div class="diff-side">
-        <div class="diff-side-label">INT (ours)${intDateStr}</div>
-        ${escHtml((msg.intContent || '').slice(0, 4000))}
-      </div>
-      <div class="diff-side">
-        <div class="diff-side-label">Source${srcDateStr}</div>
-        ${escHtml((msg.srcContent || '').slice(0, 4000))}
-      </div>
+      <span style="margin-left:auto;font-size:11px;color:var(--muted)">
+        ${escHtml(targetLabel)}${intDateStr ? ' · ' + intDateStr : ''}
+        &nbsp;vs&nbsp;
+        ${escHtml(sourceLabel)}${srcDateStr ? ' · ' + srcDateStr : ''}
+      </span>
     </div>
     <div class="conflict-actions">
-      <span style="font-size:11px;color:var(--muted);flex:1">Unattended fallback: <strong>${fallback}</strong> wins (newer real commit)</span>
-      <button class="btn btn-sm" style="background:rgba(59,130,246,0.2);color:var(--blue);border:1px solid var(--blue)" onclick="resolveConflict(this,'int')">Keep INT</button>
-      <button class="btn btn-sm" style="background:rgba(99,102,241,0.2);color:var(--accent);border:1px solid var(--accent)" onclick="resolveConflict(this,'source')">Take Source</button>
+      <button class="btn btn-sm" style="background:rgba(234,179,8,0.18);color:var(--yellow);border:1px solid rgba(234,179,8,0.4)" onclick="openMergeEditor(this)">Open Conflict Resolver</button>
     </div>
   `;
 
-  pendingConflicts[`${msg.target}::${msg.file}`] = card;
+  pendingConflicts[ck] = card;
   pane.appendChild(card);
+
+  switchTab('conflicts');
+  document.getElementById('conflictBadge').classList.add('tab-badge-urgent');
 }
 
 function resolveConflict(btn, resolution) {
-  const card = btn.closest('.conflict-card');
+  const card   = btn.closest('.conflict-card');
   const file   = card.dataset.file;
   const target = card.dataset.target;
-
+  const label  = resolution === 'source' ? `Taking source (${currentSource || 'source'})` : `Keeping ${target}`;
   vscode.postMessage({ command: 'resolve-conflict', file, resolution, target });
-
-  // Mark as resolved in UI
-  const actionsRow = card.querySelector('.conflict-actions');
-  actionsRow.innerHTML = `<span class="conflict-resolved">✅ Resolved: ${resolution === 'source' ? 'Taking source' : 'Keeping INT'}</span>`;
-
-  conflictCount = Math.max(0, conflictCount - 1);
-  document.getElementById('conflictBadge').textContent = conflictCount;
-  if (conflictCount === 0) document.getElementById('conflictBadge').classList.add('hidden');
-
-  delete pendingConflicts[`${target}::${file}`];
+  _markCardResolved(file, target, label);
 }
 
 // ── Summary ───────────────────────────────────────────────
@@ -1341,6 +1561,301 @@ function escHtml(s) {
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
+
+// ── 3-panel diff renderer (forward greedy + suffix LCS) ────
+// Suffix DP: dp[i][j] = LCS of ac[i..] vs bc[j..]
+// Forward greedy trace: greedily takes "same" the moment lines match,
+// so the EARLIEST occurrence of a repeated tag (e.g. </layoutItems>)
+// is paired with its counterpart — matching diffchecker's behaviour.
+function renderThreePanelDiff(intContent, srcContent) {
+  const a = intContent.split('\n');
+  const b = srcContent.split('\n');
+  const m = a.length, n = b.length;
+
+  const CAP = 1200;
+  const ac = a.slice(0, CAP), bc = b.slice(0, CAP);
+  const mc = ac.length, nc = bc.length;
+
+  // Build suffix LCS DP
+  const dp = Array.from({length: mc + 1}, () => new Int32Array(nc + 1));
+  for (let i = mc - 1; i >= 0; i--) {
+    for (let j = nc - 1; j >= 0; j--) {
+      dp[i][j] = ac[i].trim() === bc[j].trim()
+        ? dp[i+1][j+1] + 1
+        : Math.max(dp[i+1][j], dp[i][j+1]);
+    }
+  }
+
+  // Forward greedy trace from (0,0)
+  const diff = [];
+  let i = 0, j = 0;
+  while (i < mc || j < nc) {
+    if (i < mc && j < nc && ac[i].trim() === bc[j].trim()) {
+      // Always take the match immediately — no ambiguity
+      diff.push({ type: 'same', a: ac[i], b: bc[j] });
+      i++; j++;
+    } else if (i >= mc) {
+      diff.push({ type: 'added', b: bc[j] }); j++;
+    } else if (j >= nc) {
+      diff.push({ type: 'removed', a: ac[i] }); i++;
+    } else if (dp[i+1][j] >= dp[i][j+1]) {
+      // Removing ac[i] keeps more LCS available than adding bc[j]
+      diff.push({ type: 'removed', a: ac[i] }); i++;
+    } else {
+      diff.push({ type: 'added', b: bc[j] }); j++;
+    }
+  }
+  // Overflow beyond CAP
+  for (let k = mc; k < m; k++) diff.push({ type: 'removed', a: a[k] });
+  for (let k = nc; k < n; k++) diff.push({ type: 'added',   b: b[k] });
+
+  // Render left (target): same=plain, removed=RED
+  let targetHtml = '';
+  for (const d of diff) {
+    if (d.type === 'same')         targetHtml += `<div class="panel-same">${escHtml(d.a) || '​'}</div>`;
+    else if (d.type === 'removed') targetHtml += `<div class="panel-removed">${escHtml(d.a) || '​'}</div>`;
+  }
+
+  // Render right (source): same=plain, added=GREEN
+  let sourceHtml = '';
+  for (const d of diff) {
+    if (d.type === 'same')        sourceHtml += `<div class="panel-same">${escHtml(d.b) || '​'}</div>`;
+    else if (d.type === 'added')  sourceHtml += `<div class="panel-added">${escHtml(d.b) || '​'}</div>`;
+  }
+
+  return { targetHtml, sourceHtml };
+}
+
+// ── 3-panel Conflict Resolver ──────────────────────────────
+function openMergeEditor(btn) {
+  const card   = btn.closest('.conflict-card');
+  const file   = card.dataset.file;
+  const target = card.dataset.target;
+  const ck     = `${target}::${file}`;
+  const c      = conflictContents[ck];
+  if (!c) return;
+
+  const { targetHtml, sourceHtml } = renderThreePanelDiff(c.intContent, c.srcContent);
+
+  mergeEditorCtx = { file, target };
+  document.getElementById('mergeEditorFile').textContent    = file;
+  document.getElementById('mergeTargetLabel').textContent   = `${c.targetLabel} — current (target)`;
+  document.getElementById('mergeSourceLabel').textContent   = `${c.sourceLabel} — incoming (source)`;
+  document.getElementById('mergeEditorTargetContent').innerHTML = targetHtml;
+  document.getElementById('mergeEditorSourceContent').innerHTML = sourceHtml;
+  // Pre-fill middle with target content as safe default
+  document.getElementById('mergeEditorTextarea').value = c.intContent;
+  document.getElementById('mergeEditorModal').removeAttribute('hidden');
+}
+
+function closeMergeEditor() {
+  document.getElementById('mergeEditorModal').setAttribute('hidden', '');
+  mergeEditorCtx = null;
+}
+
+function _markCardResolved(file, target, label) {
+  const ck   = `${target}::${file}`;
+  const card = pendingConflicts[ck];
+  if (card) {
+    card.querySelector('.conflict-actions').innerHTML =
+      `<span class="conflict-resolved">✅ Resolved: ${escHtml(label)}</span>`;
+    conflictCount = Math.max(0, conflictCount - 1);
+    document.getElementById('conflictBadge').textContent = conflictCount;
+    if (conflictCount === 0) document.getElementById('conflictBadge').classList.add('hidden');
+    delete pendingConflicts[ck];
+    delete conflictContents[ck];
+  }
+}
+
+function mergeEditorKeepTarget() {
+  if (!mergeEditorCtx) return;
+  const { file, target } = mergeEditorCtx;
+  vscode.postMessage({ command: 'resolve-conflict', file, resolution: 'int', target });
+  _markCardResolved(file, target, 'Kept target');
+  closeMergeEditor();
+}
+
+function mergeEditorTakeSource() {
+  if (!mergeEditorCtx) return;
+  const { file, target } = mergeEditorCtx;
+  vscode.postMessage({ command: 'resolve-conflict', file, resolution: 'source', target });
+  _markCardResolved(file, target, 'Took source');
+  closeMergeEditor();
+}
+
+function applyCustomMerge() {
+  if (!mergeEditorCtx) return;
+  const { file, target } = mergeEditorCtx;
+  const content = document.getElementById('mergeEditorTextarea').value;
+  vscode.postMessage({ command: 'resolve-conflict', file, resolution: 'custom', target, content });
+  _markCardResolved(file, target, 'Custom merge applied');
+  closeMergeEditor();
+}
+
+// ── Approval modal ─────────────────────────────────────────
+
+// Parse flat file list → [{type, names[]}] grouped by SF metadata type
+function parseMetadataFiles(files) {
+  const typeMap = {};
+  for (const f of files) {
+    const parts = f.replace(/\\/g, '/').split('/');
+    const defaultIdx = parts.indexOf('default');
+    if (defaultIdx < 0) continue;
+    const type  = parts[defaultIdx + 1] || 'other';
+    const rawName = parts[defaultIdx + 2] || parts[parts.length - 1];
+    // For LWC/Aura the component folder name is the real name; for flat types strip extension
+    const name = rawName.replace(/\.[^.]+$/, '');
+    if (!typeMap[type]) typeMap[type] = new Set();
+    typeMap[type].add(name);
+  }
+  return Object.entries(typeMap)
+    .map(([type, names]) => ({ type, names: [...names].sort() }))
+    .sort((a, b) => a.type.localeCompare(b.type));
+}
+
+// Friendly display name for a metadata folder
+const TYPE_LABELS = {
+  classes: 'Apex Classes', triggers: 'Apex Triggers', lwc: 'LWC',
+  aura: 'Aura Components', flows: 'Flows', flexipages: 'FlexiPages',
+  layouts: 'Page Layouts', objects: 'Objects', permissionsets: 'Permission Sets',
+  permissionsetgroups: 'Permission Set Groups', profiles: 'Profiles',
+  customMetadata: 'Custom Metadata', labels: 'Custom Labels',
+  staticresources: 'Static Resources', email: 'Email Templates',
+  reports: 'Reports', dashboards: 'Dashboards', workflows: 'Workflows',
+};
+
+function showPreviewModal(data) {
+  const modal = document.getElementById('approvalModal');
+  const body  = document.getElementById('previewModalBody');
+
+  // Route arrow
+  document.getElementById('previewRouteLabel').textContent =
+    `origin/${data.source} → INT targets`;
+
+  body.innerHTML = '';
+
+  const targets = data.targets || Object.keys(data.previews || {});
+  for (const t of targets) {
+    const info  = (data.previews || {})[t] || {};
+    const block = document.createElement('div');
+    block.className = 'preview-target-block';
+
+    const files  = info.files || [];
+    const groups = parseMetadataFiles(files);
+    const total  = files.length;
+
+    let badgeHtml = '';
+    if (info.error) {
+      badgeHtml = `<span class="preview-error-badge">error</span>`;
+    } else if (total === 0) {
+      badgeHtml = `<span class="preview-empty-badge">already up-to-date</span>`;
+    } else {
+      badgeHtml = `<span class="preview-count-badge">${total} file${total === 1 ? '' : 's'}</span>`;
+    }
+
+    let groupsHtml = '';
+    if (info.error) {
+      groupsHtml = `<div class="preview-type-group" style="color:var(--red);font-size:12px">${escHtml(info.error)}</div>`;
+    } else if (total === 0) {
+      groupsHtml = `<div class="preview-type-group" style="color:var(--muted);font-size:12px">No changes to deploy — branch is already in sync.</div>`;
+    } else {
+      for (const { type, names } of groups) {
+        const label = TYPE_LABELS[type] || type;
+        const MAX = 12;
+        const shown = names.slice(0, MAX);
+        const rest  = names.length - shown.length;
+        groupsHtml += `
+          <div class="preview-type-group">
+            <div class="preview-type-label">${escHtml(label)} (${names.length})</div>
+            <div class="preview-names">
+              ${shown.map(n => `<span class="preview-name-chip">${escHtml(n)}</span>`).join('')}
+              ${rest > 0 ? `<span class="preview-more">+${rest} more</span>` : ''}
+            </div>
+          </div>`;
+      }
+    }
+
+    block.innerHTML = `
+      <div class="preview-target-hdr">
+        <span class="preview-target-name">${escHtml(t)}</span>
+        ${badgeHtml}
+      </div>
+      ${groupsHtml}
+    `;
+    body.appendChild(block);
+  }
+
+  modal.hidden = false;
+}
+
+function confirmSync() {
+  document.getElementById('approvalModal').hidden = true;
+  vscode.postMessage({ command: 'confirm-sync' });
+}
+
+function cancelPreview() {
+  document.getElementById('approvalModal').hidden = true;
+  vscode.postMessage({ command: 'cancel-preview' });
+  // Restore sync button
+  document.getElementById('syncBtn').disabled = false;
+}
 </script>
+
+<!-- 3-panel Conflict Resolver modal -->
+<div class="modal-overlay" id="mergeEditorModal" hidden>
+  <div class="modal-box fade-in" style="width:96vw;max-width:1400px;display:flex;flex-direction:column;height:88vh;padding:0">
+    <!-- header -->
+    <div class="modal-header" style="flex-shrink:0;padding:12px 16px">
+      <div>
+        <div class="modal-title">Conflict Resolver</div>
+        <div class="modal-subtitle" id="mergeEditorFile" style="font-family:var(--font-mono);font-size:11px;margin-top:2px;word-break:break-all"></div>
+      </div>
+    </div>
+    <!-- column labels -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;flex-shrink:0;border-top:1px solid var(--border)">
+      <div class="resolve-panel-hdr rp-target" id="mergeTargetLabel">Target (current)</div>
+      <div class="resolve-panel-hdr rp-middle">Your Resolution <span style="font-weight:400;opacity:.7">(edit below)</span></div>
+      <div class="resolve-panel-hdr rp-source"  id="mergeSourceLabel">Source (incoming)</div>
+    </div>
+    <!-- 3 panels -->
+    <div class="resolve-grid">
+      <!-- LEFT: target read-only, removed lines red -->
+      <div class="resolve-panel">
+        <div class="resolve-panel-body" id="mergeEditorTargetContent"></div>
+      </div>
+      <!-- MIDDLE: editable resolution -->
+      <div class="resolve-panel" style="border-right:1px solid var(--border)">
+        <textarea class="resolve-textarea" id="mergeEditorTextarea" placeholder="Edit your resolution here…"></textarea>
+      </div>
+      <!-- RIGHT: source read-only, added lines green -->
+      <div class="resolve-panel">
+        <div class="resolve-panel-body" id="mergeEditorSourceContent"></div>
+      </div>
+    </div>
+    <!-- footer -->
+    <div class="modal-footer" style="flex-shrink:0">
+      <button class="btn" onclick="closeMergeEditor()" style="background:var(--surface2);color:var(--muted)">Cancel</button>
+      <button class="btn" onclick="mergeEditorKeepTarget()" style="background:rgba(244,63,94,0.18);color:var(--red)">Keep Target</button>
+      <button class="btn" onclick="mergeEditorTakeSource()" style="background:rgba(99,102,241,0.18);color:var(--accent)">Take Source</button>
+      <button class="btn btn-primary" onclick="applyCustomMerge()">Apply Resolution</button>
+    </div>
+  </div>
+</div>
+
+<!-- Approval modal -->
+<div class="modal-overlay" id="approvalModal" hidden>
+  <div class="modal-box fade-in">
+    <div class="modal-header">
+      <div class="modal-title">Confirm Deployment</div>
+      <div class="modal-subtitle" id="previewRouteLabel"></div>
+    </div>
+    <div class="modal-body" id="previewModalBody"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="cancelPreview()" style="background:var(--surface2);color:var(--muted)">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmSync()">Approve &amp; Run</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
