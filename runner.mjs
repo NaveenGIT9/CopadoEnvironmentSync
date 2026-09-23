@@ -496,6 +496,49 @@ async function runOrgRefStrip(wt, alias, tmpDir, scriptsPath, target) {
   log(rewrite.stdout.trim() || '(no output)', 'info', target);
 }
 
+// ── Metadata type inference from file paths ────────────────────────────────
+function inferMetadataTypes(files) {
+  const map = new Map(); // type → Set<member>
+  const add = (type, member) => {
+    if (!map.has(type)) map.set(type, new Set());
+    map.get(type).add(member);
+  };
+  for (const raw of files) {
+    const f = raw.replace(/\\/g, '/');
+    let m;
+    if ((m = f.match(/\/classes\/([^/]+)\.cls(-meta\.xml)?$/)))           { add('ApexClass',               m[1]); continue; }
+    if ((m = f.match(/\/triggers\/([^/]+)\.trigger(-meta\.xml)?$/)))      { add('ApexTrigger',             m[1]); continue; }
+    if ((m = f.match(/\/profiles\/(.+)\.profile-meta\.xml$/)))            { add('Profile',                 m[1]); continue; }
+    if ((m = f.match(/\/permissionsets\/(.+)\.permissionset-meta\.xml$/))){ add('PermissionSet',           m[1]); continue; }
+    if ((m = f.match(/\/layouts\/(.+)\.layout-meta\.xml$/)))              { add('Layout',                  m[1]); continue; }
+    if ((m = f.match(/\/objects\/([^/]+)\/fields\/([^/]+)\.field-meta\.xml$/)))           { add('CustomField',    `${m[1]}.${m[2]}`); continue; }
+    if ((m = f.match(/\/objects\/([^/]+)\/validationRules\/([^/]+)\.validationRule-meta\.xml$/))) { add('ValidationRule', `${m[1]}.${m[2]}`); continue; }
+    if ((m = f.match(/\/objects\/([^/]+)\/recordTypes\/([^/]+)\.recordType-meta\.xml$/))) { add('RecordType',  `${m[1]}.${m[2]}`); continue; }
+    if ((m = f.match(/\/objects\/([^/]+)\/listViews\/([^/]+)\.listView-meta\.xml$/)))     { add('ListView',    `${m[1]}.${m[2]}`); continue; }
+    if ((m = f.match(/\/objects\/([^/]+)\/[^/]+\.object-meta\.xml$/)))    { add('CustomObject',            m[1]); continue; }
+    if ((m = f.match(/\/flows\/([^/]+)\.flow-meta\.xml$/)))               { add('Flow',                    m[1]); continue; }
+    if ((m = f.match(/\/flexipages\/([^/]+)\.flexipage-meta\.xml$/)))     { add('FlexiPage',               m[1]); continue; }
+    if ((m = f.match(/\/lwc\/([^/]+)\//)))                                { add('LightningComponentBundle', m[1]); continue; }
+    if ((m = f.match(/\/aura\/([^/]+)\//)))                               { add('AuraDefinitionBundle',    m[1]); continue; }
+    if ((m = f.match(/\/pages\/([^/]+)\.page(-meta\.xml)?$/)))            { add('ApexPage',                m[1]); continue; }
+    if ((m = f.match(/\/components\/([^/]+)\.component(-meta\.xml)?$/)))  { add('ApexComponent',           m[1]); continue; }
+    if ((m = f.match(/\/applications\/([^/]+)\.app-meta\.xml$/)))         { add('CustomApplication',       m[1]); continue; }
+    if ((m = f.match(/\/tabs\/([^/]+)\.tab-meta\.xml$/)))                 { add('CustomTab',               m[1]); continue; }
+    if (f.includes('labels/'))                                            { add('CustomLabel',             '*');  continue; }
+  }
+  return map;
+}
+
+function buildPackageXml(typeMap, apiVersion = '67.0') {
+  let typesBlock = '';
+  for (const [type, members] of typeMap) {
+    typesBlock += '    <types>\n';
+    for (const m of members) typesBlock += `        <members>${m}</members>\n`;
+    typesBlock += `        <name>${type}</name>\n    </types>\n`;
+  }
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<Package xmlns="http://soap.sforce.com/2006/04/metadata">\n${typesBlock}    <version>${apiVersion}</version>\n</Package>\n`;
+}
+
 async function generateManifest(wt, tmpDir, scriptsPath, deployBaseline, target) {
   log('Generating deploy manifest...', 'info', target);
 
@@ -533,17 +576,18 @@ async function generateManifest(wt, tmpDir, scriptsPath, deployBaseline, target)
       log(`sf project generate manifest failed (exit ${result.status}): ${(result.stderr || result.stdout).trim().slice(0, 500)}`, 'warn', target);
     }
 
-    // If sf CLI failed to write the manifest, fall back to a hand-written one.
-    // For labels-only this means deploying CustomLabel:* (all labels); acceptable fallback.
+    // If sf CLI failed to write the manifest, build one from the file paths ourselves.
+    // The old fallback wrote an empty manifest for non-label files → deploy said
+    // "no local changes" → false gate PASS with nothing actually deployed.
     if (!existsSync(join(tmpDir, 'pkg.xml'))) {
-      log('Manifest generation failed — writing fallback manifest', 'warn', target);
-      const hasOnlyLabels = upsertFiles.every(f => f.includes('labels/'));
-      const typesBlock = hasOnlyLabels
-        ? '    <types>\n        <members>*</members>\n        <name>CustomLabel</name>\n    </types>\n'
-        : '';
-      writeFileSync(join(tmpDir, 'pkg.xml'),
-        `<?xml version="1.0" encoding="UTF-8"?>\n<Package xmlns="http://soap.sforce.com/2006/04/metadata">\n${typesBlock}    <version>67.0</version>\n</Package>\n`
-      );
+      log('Manifest generation failed — inferring types from file paths', 'warn', target);
+      const typeMap = inferMetadataTypes(upsertFiles);
+      if (typeMap.size === 0) {
+        log('Could not infer any metadata types — gate will likely fail', 'warn', target);
+      } else {
+        for (const [t, ms] of typeMap) log(`  Fallback: ${t} (${[...ms].join(', ')})`, 'info', target);
+      }
+      writeFileSync(join(tmpDir, 'pkg.xml'), buildPackageXml(typeMap));
     }
   }
 
