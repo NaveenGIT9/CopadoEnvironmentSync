@@ -6,3 +6,5 @@ panel.ts
 **/*.ts
 !**/*.d.ts
 node_modules/
+copado-page-assignments.html
+*.vsix
