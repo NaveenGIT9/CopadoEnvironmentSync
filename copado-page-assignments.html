@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Copado Page Assignments</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --bg: #EEF2FF; --surface: #FFFFFF; --surface-2: #F5F8FF; --border: #C7D3ED;
+  --text: #0D1B3E; --text-2: #4A5980; --text-3: #8A97B8;
+  --accent: #1A49DB; --accent-sub: #E8EEFF;
+  --add: #05713D; --add-bg: #ECFDF5; --add-bd: #6EE7B7;
+  --rem: #B91C1C; --rem-bg: #FEF2F2; --rem-bd: #FECACA;
+  --ret: #92400E; --ret-bg: #FFFBEB; --ret-bd: #FCD34D;
+  --cli: #5B21B6; --cli-bg: #F5F3FF; --cli-bd: #C4B5FD;
+  --code-bg: #1B2B4B; --code-fg: #C8D8F8;
+  --warn-bg: #FFFBEB; --warn-bd: #F59E0B;
+  --info-bg: #EFF6FF; --info-bd: #BFDBFE;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0A1220; --surface: #132032; --surface-2: #1A2B40; --border: #253A5A;
+    --text: #E2EAFF; --text-2: #7A98CC; --text-3: #405A82;
+    --accent: #5B8EFF; --accent-sub: #0E1F42;
+    --add: #34D399; --add-bg: #052817; --add-bd: #064E30;
+    --rem: #F87171; --rem-bg: #200A0A; --rem-bd: #7F1D1D;
+    --ret: #FCD34D; --ret-bg: #1C1400; --ret-bd: #78350F;
+    --cli: #A78BFA; --cli-bg: #1A0F2E; --cli-bd: #4C1D95;
+    --code-bg: #060F1E; --code-fg: #C8D8F8;
+    --warn-bg: #1A1200; --warn-bd: #92400E;
+    --info-bg: #0B1E35; --info-bd: #1E3A5F;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0A1220; --surface: #132032; --surface-2: #1A2B40; --border: #253A5A;
+  --text: #E2EAFF; --text-2: #7A98CC; --text-3: #405A82;
+  --accent: #5B8EFF; --accent-sub: #0E1F42;
+  --add: #34D399; --add-bg: #052817; --add-bd: #064E30;
+  --rem: #F87171; --rem-bg: #200A0A; --rem-bd: #7F1D1D;
+  --ret: #FCD34D; --ret-bg: #1C1400; --ret-bd: #78350F;
+  --cli: #A78BFA; --cli-bg: #1A0F2E; --cli-bd: #4C1D95;
+  --code-bg: #060F1E; --code-fg: #C8D8F8;
+  --warn-bg: #1A1200; --warn-bd: #92400E;
+  --info-bg: #0B1E35; --info-bd: #1E3A5F;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.65; padding-inline: 16px; }
+h1,h2,h3,h4 { font-family: 'Sora', system-ui, sans-serif; text-wrap: balance; }
+
+.page { max-width: 980px; margin-inline: auto; padding-block: 32px 64px; }
+
+/* ── Page Header ── */
+.ph { margin-bottom: 28px; }
+.ph h1 { font-size: clamp(20px, 3.5vw, 28px); font-weight: 700; letter-spacing: -0.025em; }
+.ph p { color: var(--text-2); font-size: 14px; margin-top: 6px; max-width: 68ch; }
+
+/* ── Example box ── */
+.ex-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; margin-bottom: 28px; }
+.ex-title { font-family: 'DM Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-3); margin-bottom: 12px; }
+.ex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+.ex-item { display: flex; flex-direction: column; gap: 2px; }
+.ex-lbl { font-family: 'DM Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-3); }
+.ex-val { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--accent); font-weight: 500; word-break: break-all; }
+
+/* ── Tabs ── */
+.tabs-bar { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 32px; overflow-x: auto; scrollbar-width: none; gap: 2px; }
+.tabs-bar::-webkit-scrollbar { display: none; }
+.tab-btn { font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 600; padding: 10px 18px; background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -2px; cursor: pointer; color: var(--text-3); white-space: nowrap; transition: color .12s, border-color .12s; }
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* ── Section ── */
+.asn { margin-bottom: 36px; }
+.asn-hdr { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.asn-tag { font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 500; background: var(--accent-sub); color: var(--accent); padding: 3px 9px; border-radius: 4px; letter-spacing: 0.05em; flex-shrink: 0; }
+.asn-hdr h2 { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; }
+.asn-desc { color: var(--text-2); font-size: 13.5px; margin-bottom: 18px; max-width: 72ch; }
+.asn-desc strong { color: var(--text); font-weight: 600; }
+
+/* ── Op cards ── */
+.op-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 640px) { .op-grid { grid-template-columns: 1fr; } }
+.op-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.op-hdr { padding: 10px 16px; font-family: 'Sora', sans-serif; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; display: flex; align-items: center; gap: 7px; border-bottom: 1px solid; }
+.op-hdr.assign { background: var(--add-bg); color: var(--add); border-bottom-color: var(--add-bd); }
+.op-hdr.remove { background: var(--rem-bg); color: var(--rem); border-bottom-color: var(--rem-bd); }
+.op-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.op-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.op-step { font-size: 13.5px; color: var(--text-2); line-height: 1.5; }
+.op-step strong { color: var(--text); }
+
+/* ── Code inline ── */
+code { font-family: 'DM Mono', monospace; font-size: 11.5px; background: var(--code-bg); color: var(--code-fg); padding: 1px 5px; border-radius: 3px; }
+
+/* ── Chips ── */
+.commits-lbl { font-family: 'DM Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-3); margin-bottom: 7px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: stretch; border-radius: 5px; border: 1px solid; font-family: 'DM Mono', monospace; overflow: hidden; }
+.chip-main { padding: 5px 9px; display: flex; flex-direction: column; gap: 1px; }
+.chip-name { font-size: 11.5px; font-weight: 500; line-height: 1.25; }
+.chip-type { font-size: 9.5px; opacity: 0.6; line-height: 1.2; }
+.chip-badge { padding: 0 9px; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; background: rgba(0,0,0,.07); border-left: 1px solid currentColor; }
+.chip.add { background: var(--add-bg); border-color: var(--add-bd); color: var(--add); }
+.chip.ret { background: var(--ret-bg); border-color: var(--ret-bd); color: var(--ret); }
+.chip.opt { background: var(--info-bg); border-color: var(--info-bd); color: var(--accent); }
+
+/* ── Why box ── */
+.op-why { font-size: 12.5px; color: var(--text-2); background: var(--surface-2); border-left: 3px solid var(--border); border-radius: 0 5px 5px 0; padding: 10px 12px; line-height: 1.55; }
+
+/* ── CLI shortcut box ── */
+.cli-box { background: var(--cli-bg); border: 1px solid var(--cli-bd); border-radius: 7px; padding: 12px 14px; margin-top: 4px; }
+.cli-box-hdr { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; font-family: 'Sora', sans-serif; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--cli); }
+.cli-box-body { font-size: 13px; color: var(--text-2); line-height: 1.55; }
+.cli-box-body strong { color: var(--text); }
+
+/* ── XML block ── */
+.xml-section { margin-top: 18px; }
+.xml-section-title { font-family: 'DM Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-3); margin-bottom: 8px; }
+.xml-tabs { display: flex; gap: 6px; margin-bottom: 0; flex-wrap: wrap; }
+.xml-tab { font-family: 'DM Mono', monospace; font-size: 10.5px; font-weight: 500; padding: 4px 10px; border-radius: 5px 5px 0 0; border: 1px solid var(--border); border-bottom: none; cursor: pointer; background: var(--surface-2); color: var(--text-3); transition: background .1s, color .1s; }
+.xml-tab.active.add { background: var(--add-bg); color: var(--add); border-color: var(--add-bd); }
+.xml-tab.active.rem { background: var(--rem-bg); color: var(--rem); border-color: var(--rem-bd); }
+.xml-wrap { background: var(--code-bg); border-radius: 0 7px 7px 7px; padding: 16px 18px; overflow-x: auto; border: 1px solid #253A5A; }
+.xml-wrap pre { font-family: 'DM Mono', monospace; font-size: 12.5px; color: var(--code-fg); line-height: 1.8; white-space: pre; }
+.xt { color: #7DD3FC; } .xv { color: #FDE68A; } .xc { color: #64748B; } .xa { color: #86EFAC; } .xr { color: #FCA5A5; }
+.xml-pane { display: none; } .xml-pane.active { display: block; }
+
+/* ── Callouts ── */
+.callout { padding: 11px 14px; border-radius: 6px; font-size: 13px; line-height: 1.55; margin-top: 16px; border: 1px solid var(--warn-bd); background: var(--warn-bg); color: var(--text); }
+.callout strong { font-weight: 600; }
+.callout-info { border-color: var(--info-bd); background: var(--info-bg); }
+
+/* ── Struct box ── */
+.struct-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; margin-bottom: 24px; }
+.struct-title { font-family: 'DM Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-3); margin-bottom: 14px; }
+.struct-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 520px) { .struct-row { grid-template-columns: 1fr; } }
+.struct-item { background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; }
+.struct-item-title { font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 700; margin-bottom: 5px; }
+.struct-item-body { font-size: 12.5px; color: var(--text-2); line-height: 1.5; }
+.struct-note { margin-top: 12px; padding: 10px 14px; background: var(--accent-sub); border-left: 3px solid var(--accent); border-radius: 0 5px 5px 0; font-size: 13px; color: var(--text-2); line-height: 1.5; }
+.struct-note strong { color: var(--text); }
+
+/* ── Summary table ── */
+.tbl-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
+.sum-tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.sum-tbl th { background: var(--accent-sub); color: var(--accent); font-family: 'Sora', sans-serif; font-weight: 700; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.06em; padding: 12px 16px; text-align: left; border-bottom: 2px solid var(--border); white-space: nowrap; }
+.sum-tbl td { padding: 11px 16px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.5; }
+.sum-tbl tr:last-child td { border-bottom: none; }
+.sum-tbl tr:nth-child(odd) td { background: var(--surface); }
+.sum-tbl tr:nth-child(even) td { background: var(--surface-2); }
+.sum-tbl .fc { font-weight: 600; white-space: nowrap; }
+.pill { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-family: 'DM Mono', monospace; font-weight: 700; border: 1px solid; white-space: nowrap; }
+.pill-y { background: var(--add-bg); color: var(--add); border-color: var(--add-bd); }
+.pill-c { background: var(--ret-bg); color: var(--ret); border-color: var(--ret-bd); }
+.pill-n { background: var(--rem-bg); color: var(--rem); border-color: var(--rem-bd); }
+.pill-cli { background: var(--cli-bg); color: var(--cli); border-color: var(--cli-bd); }
+
+/* ── CLI tab styles ── */
+.cli-scenario { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 20px; overflow: hidden; }
+.cli-scenario-hdr { padding: 14px 18px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+.cli-scenario-title { font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px; }
+.cli-scenario-sub { font-size: 13px; color: var(--text-2); margin-top: 4px; }
+.cli-scenario-body { padding: 18px; display: flex; flex-direction: column; gap: 16px; }
+.cli-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 640px) { .cli-grid { grid-template-columns: 1fr; } }
+.cli-col { display: flex; flex-direction: column; gap: 10px; }
+.cli-col-title { font-family: 'DM Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; padding: 5px 10px; border-radius: 4px; display: inline-block; }
+.cli-col-title.add { background: var(--add-bg); color: var(--add); }
+.cli-col-title.rem { background: var(--rem-bg); color: var(--rem); }
+.cli-col-body { font-size: 13px; color: var(--text-2); line-height: 1.55; }
+.cli-col-body strong { color: var(--text); }
+.condition-box { background: var(--cli-bg); border: 1px solid var(--cli-bd); border-radius: 6px; padding: 10px 12px; font-size: 12.5px; color: var(--text-2); line-height: 1.5; }
+.condition-box strong { color: var(--cli); }
+.xml-block-inline { background: var(--code-bg); border-radius: 6px; padding: 12px 14px; overflow-x: auto; }
+.xml-block-inline pre { font-family: 'DM Mono', monospace; font-size: 11.5px; color: var(--code-fg); line-height: 1.75; white-space: pre; }
+
+hr.div { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+.section-intro { margin-bottom: 20px; }
+.section-intro h2 { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 6px; }
+.section-intro p { font-size: 13.5px; color: var(--text-2); max-width: 65ch; }
+.badge-cli { background: var(--cli-bg); color: var(--cli); border: 1px solid var(--cli-bd); padding: 2px 9px; border-radius: 4px; font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="ph">
+    <h1>Copado Page &amp; Layout Assignments</h1>
+    <p>What to commit in Copado, what XML blocks to add or remove, and when you can skip the UI and commit directly from CLI.</p>
+  </header>
+
+  <div class="ex-box">
+    <div class="ex-title">Example components used throughout this doc</div>
+    <div class="ex-grid">
+      <div class="ex-item"><span class="ex-lbl">FlexiPage</span><span class="ex-val">Account_Record_Page</span></div>
+      <div class="ex-item"><span class="ex-lbl">Custom Object</span><span class="ex-val">Account</span></div>
+      <div class="ex-item"><span class="ex-lbl">Custom Application</span><span class="ex-val">LTM_Sales_App</span></div>
+      <div class="ex-item"><span class="ex-lbl">Record Type</span><span class="ex-val">Account.Enterprise</span></div>
+      <div class="ex-item"><span class="ex-lbl">Profile</span><span class="ex-val">Sales_User</span></div>
+      <div class="ex-item"><span class="ex-lbl">Page Layout</span><span class="ex-val">Account-Account (Sales) Layout</span></div>
+    </div>
+  </div>
+
+  <div class="tabs-bar" role="tablist">
+    <button class="tab-btn active" onclick="switchTab(event,'fp')">FlexiPage Assignments</button>
+    <button class="tab-btn" onclick="switchTab(event,'pl')">Page Layout Assignments</button>
+    <button class="tab-btn" onclick="switchTab(event,'cli')">CLI Commit Guide</button>
+    <button class="tab-btn" onclick="switchTab(event,'cmp')">Comparison</button>
+  </div>
+
+
+  <!-- ════════════════════════════════════════════════
+       FLEXIPAGE TAB
+  ════════════════════════════════════════════════ -->
+  <div id="fp" class="tab-pane active">
+
+    <!-- TYPE 1 -->
+    <div class="asn">
+      <div class="asn-hdr"><span class="asn-tag">TYPE 1</span><h2>Org Default</h2></div>
+      <p class="asn-desc">Sets the FlexiPage as the universal layout for an object across <strong>all apps and profiles</strong>. Assignment lives inside the object's <strong>CustomObject (.object-meta.xml)</strong>.</p>
+      <div class="op-grid">
+        <div class="op-card">
+          <div class="op-hdr assign"><span class="op-dot"></span>Assign</div>
+          <div class="op-body">
+            <div class="op-step"><strong>In Dev App Builder:</strong> Set <code>Account_Record_Page</code> as the Org Default for Account. Save.</div>
+            <div>
+              <div class="commits-lbl">Copado Commit</div>
+              <div class="chips">
+                <div class="chip add"><div class="chip-main"><span class="chip-name">Account_Record_Page</span><span class="chip-type">FlexiPage</span></div><div class="chip-badge">ADD</div></div>
+                <div class="chip add"><div class="chip-main"><span class="chip-name">Account</span><span class="chip-type">CustomObject</span></div><div class="chip-badge">ADD</div></div>
+              </div>
+            </div>
+            <div class="op-why">Salesforce writes the <code>&lt;actionOverrides&gt;</code> block inside <code>Account.object-meta.xml</code> pointing to the FlexiPage.</div>
+
+            <div class="xml-section">
+              <div class="xml-section-title">XML added to Account.object-meta.xml</div>
+              <div class="xml-wrap">
+                <pre><span class="xa">&lt;!-- ADDED block --&gt;</span>
+<span class="xt">&lt;actionOverrides&gt;</span>
+    <span class="xt">&lt;actionName&gt;</span><span class="xv">View</span><span class="xt">&lt;/actionName&gt;</span>
+    <span class="xt">&lt;content&gt;</span><span class="xv">Account_Record_Page</span><span class="xt">&lt;/content&gt;</span>
+    <span class="xt">&lt;formFactor&gt;</span><span class="xv">Large</span><span class="xt">&lt;/formFactor&gt;</span>
+    <span class="xt">&lt;skipRecordTypeSelect&gt;</span><span class="xv">false</span><span class="xt">&lt;/skipRecordTypeSelect&gt;</span>
+    <span class="xt">&lt;type&gt;</span><span class="xv">Flexipage</span><span class="xt">&lt;/type&gt;</span>
+<span class="xt">&lt;/actionOverrides&gt;</span></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="op-card">
+          <div class="op-hdr remove"><span class="op-dot"></span>Remove</div>
+          <div class="op-body">
+            <div class="op-step"><strong>In Dev App Builder:</strong> Remove the Org Default assignment (reset to system default). Save.</div>
+            <div>
+              <div class="commits-lbl">Copado Commit</div>
+              <div class="chips">
+                <div class="chip add"><div class="chip-main"><span class="chip-name">Account_Record_Page</span><span class="chip-type">FlexiPage</span></div><div class="chip-badge">ADD</div></div>
+                <div class="chip add"><div class="chip-main"><span class="chip-name">Account</span><span class="chip-type">CustomObject</span></div><div class="chip-badge">ADD</div></div>
+              </div>
+            </div>
+            <div class="op-why">Copado retrieves <code>Account.object-meta.xml</code> with the <code>&lt;actionOverrides&gt;</code> block deleted — deploying this removes the assignment in target orgs.</div>
+
+            <div class="xml-section">
+              <div class="xml-section-title">XML removed from Account.object-meta.xml</div>
+              <div class="xml-wrap">
+                <pre><span class="xr">&lt;!-- REMOVED block --&gt;</span>
+<span class="xr">&lt;actionOverrides&gt;</span>
+<span class="xr">    &lt;actionName&gt;View&lt;/actionName&gt;</span>
+<span class="xr">    &lt;content&gt;Account_Record_Page&lt;/content&gt;</span>
+<span class="xr">    &lt;formFactor&gt;Large&lt;/formFactor&gt;</span>
+<span class="xr">    &lt;skipRecordTypeSelect&gt;false&lt;/skipRecordTypeSelect&gt;</span>
+<span class="xr">    &lt;type&gt;Flexipage&lt;/type&gt;</span>
+<span class="xr">&lt;/actionOverrides&gt;</span></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="div">
+
+    <!-- TYPE 2 -->
+    <div class="asn">
+      <div class="asn-hdr"><span class="asn-tag">TYPE 2</span><h2>App Default</h2></div>
+      <p class="asn-desc">Sets the FlexiPage as the default layout for a <strong>specific Lightning Application</strong>. Assignment lives inside the app's <strong>CustomApplication (.app-meta.xml)</strong> as an <code>&lt;actionOverrides&gt;</code> block.</p>
+      <div class="op-grid">
+        <div class="op-card">
+          <div class="op-hdr assign"><span class="op-dot"></span>Assign</div>
+          <div class="op-body">
+            <div class="op-step"><strong>In Dev App Builder:</strong> Set <code>Account_Record_Page</code> as the App Default for <code>LTM_Sales_App</code>. Save.</div>
+            <div>
+              <div class="commits-lbl">Copado Commit</div>
+              <div class="chips">
+                <div class="chip add"><div class="chip-main"><span class="chip-name">Account_Record_Page</span><span class="chip-type">FlexiPage</span></div><div class="chip-badge">ADD</div></div>
+                <div class="chip add"><div class="chip-main"><span class="chip-name">LTM_Sales_App</span><span class="chip-type">CustomApplication</span></div><div class="chip-badge">ADD</div></div>
+              </div>
+            </div>
+            <div class="op-why">Salesforce writes the <code>&lt;actionOverrides&gt;</code> block inside <code>LTM_Sales_App.app-meta.xml</code>.</div>
+
+            <div class="xml-section">
+              <div class="xml-section-title">XML added to LTM_Sales_App.app-meta.xml</div>
+              <div class="xml-wrap">
+                <pre><span class="xa">&lt;!-- ADDED block --&gt;</span>
+<span class="xt">&lt;actionOverrides&gt;</span>
+    <span class="xt">&lt;actionName&gt;</span><span class="xv">View</span><span class="xt">&lt;/actionName&gt;</span>
+    <span class="xt">&lt;content&gt;</span><span class="xv">Account_Record_Page</span><span class="xt">&lt;/content&gt;</span>
+    <span class="xt">&lt;formFactor&gt;</span><span class="xv">Large</span><span class="xt">&lt;/formFactor&gt;</span>
+    <span class="xt">&lt;pageOrSobjectType&gt;</span><span class="xv">Account</span><span class="xt">&lt;/pageOrSobjectType&gt;</span>
+    <span class="xt">&lt;type&gt;</span><span class="xv">Flexipage</span><span class="xt">&lt;/type&gt;</span>
+<span class="xt">&lt;/actionOverrides&gt;</span></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="op-card">
+          <div class="op-hdr remove"><span class="op-dot"></span>Remove</div>
+          <div class="op-body">
+            <div class="op-step"><strong>In Dev App Builder:</strong> Remove the App Default assignment for <code>LTM_Sales_App</code>. Save.</div>
+            <div>
+              <div class="commits-lbl">Copado Commit</div>
+              <div class="chips">
+                <div class="chip add"><div class="chip-main"><span class="chip-name">Account_Record_Page</span><span class="chip-type">FlexiPage</span></div><div class="chip-badge">ADD</div></div>
+                <div class="chip add"><div class="chip-main"><span class="chip-name">LTM_Sales_App</span><span class="chip-type">CustomApplication</span></div><div class="chip-badge">ADD</div></div>
+              </div>
+            </div>
+            <div class="op-why">Retrieving <code>LTM_Sales_App</code> pulls the updated XML with the <code>&lt;actionOverrides&gt;</code> block removed. Deploying this strips the assignment in target orgs.</div>
+
+            <div class="xml-section">
+              <div class="xml-section-title">XML removed from LTM_Sales_App.app-meta.xml</div>
+              <div class="xml-wrap">
+                <pre><span class="xr">&lt;!-- REMOVED block --&gt;</span>
+<span class="xr">&lt;actionOverrides&gt;</span>
+<span class="xr">    &lt;actionName&gt;View&lt;/actionName&gt;</span>
+<span class="xr">    &lt;content&gt;Account_Record_Page&lt;/content&gt;</span>
+<span class="xr">    &lt;formFactor&gt;Large&lt;/formFactor&gt;</span>
+<span class="xr">    &lt;pageOrSobjectType&gt;Account&lt;/pageOrSobjectType&gt;</span>
+<span class="xr">    &lt;type&gt;Flexipage&lt;/type&gt;</span>
+<span class="xr">&lt;/actionOverrides&gt;</span></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="callout"><strong>Note:</strong> Assignments for the <code>standard_serviceConsole</code> app do not deploy via Copado — document these as a manual post-deployment step.</div>
+    </div>
+
+    <hr class="div">
+
+    <!-- TYPE 3 -->
+    <div class="asn">
+      <div class="asn-hdr"><span class="asn-tag">TYPE 3</span><h2>App + Record Type + Profile</h2></div>
+      <p class="asn-desc">Granular assignment for a specific combination of App + Record Type + Profile. Stored as <strong><code>&lt;profileActionOverrides&gt;</code></strong> inside the app's <code>.app-meta.xml</code>.</p>
+      <div class="op-grid">
+        <div class="op-card">
+          <div class="op-hdr assign"><span class="op-dot"></span>Assign</div>
+          <div class="op-body">
+            <div class="op-step"><strong>In Dev App Builder:</strong> Assign <code>Account_Record_Page</code> to <code>LTM_Sales_App</code> + <code>Account.Enterprise</code> + <code>Sales_User</code> Profile.</div>
+            <div>
+              <div class="commits-lbl">Copado Commit</div>
+              <div class="chips">
+                <div class="chip add"><div class="chip-main"><span class="chip-name">Account_Record_Page</span><span class="chip-type">FlexiPage</span></div><div class="chip-badge">ADD</div></div>
+                <div class="chip add"><div class="chip-main"><span class="chip-name">LTM_Sales_App</span><span class="chip-type">CustomApplication</span></div><div class="chip-badge">ADD</div></div>
+                <div class="chip add"><div class="chip-main"><span class="chip-name">Sales_User</span><span class="chip-type">Profile</span></div><div class="chip-badge">ADD</div></div>
+                <div class="chip add"><div class="chip-main"><span class="chip-name">Account</span><span class="chip-type">CustomObject</span></div><div class="chip-badge">ADD</div></div>
+              </div>
+            </div>
+            <div class="op-why">The <code>&lt;profileActionOverrides&gt;</code> block linking App + RecordType + Profile + FlexiPage is written inside <code>LTM_Sales_App.app-meta.xml</code>.</div>
+
+            <div class="xml-section">
+              <div class="xml-section-title">XML added to LTM_Sales_App.app-meta.xml</div>
+              <div class="xml-wrap">
+                <pre><span class="xa">&lt;!-- ADDED block --&gt;</span>
+<span class="xt">&lt;profileActionOverrides&gt;</span>
+    <span class="xt">&lt;actionName&gt;</span><span class="xv">View</span><span class="xt">&lt;/actionName&gt;</span>
+    <span class="xt">&lt;content&gt;</span><span class="xv">Account_Record_Page</span><span class="xt">&lt;/content&gt;</span>
+    <span class="xt">&lt;formFactor&gt;</span><span class="xv">Large</span><span class="xt">&lt;/formFactor&gt;</span>
+    <span class="xt">&lt;pageOrSobjectType&gt;</span><span class="xv">Account</span><span class="xt">&lt;/pageOrSobjectType&gt;</span>
+    <span class="xt">&lt;profile&gt;</span><span class="xv">Sales_User</span><span class="xt">&lt;/profile&gt;</span>
+    <span class="xt">&lt;recordType&gt;</span><span class="xv">Account.Enterprise</span><span class="xt">&lt;/recordType&gt;</span>
+    <span class="xt">&lt;type&gt;</span><span class="xv">Flexipage</span><span class="xt">&lt;/type&gt;</span>
+<span class="xt">&lt;/profileActionOverrides&gt;</span></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="op-card">
+          <div class="op-hdr remove"><span class="op-dot"></span>Remove</div>
+          <div class="op-body">
+            <div class="op-step"><strong>In Dev App Builder:</strong> Unassign <code>Account_Record_Page</code> from <code>LTM_Sales_App</code> + <code>Account.Enterprise</code> + <code>Sales_User</code>. Save.</div>
+            <div>
+              <div class="commits-lbl">Copado Commit</div>
+              <div class="chips">
+                <div class="chip add"><div class="chip-main"><span class="chip-name">LTM_Sales_App</span><span class="chip-type">CustomApplication</span></div><div class="chip-badge">ADD</div></div>
+                <div class="chip add"><div class="chip-main"><span class="chip-name">Sales_User</span><span class="chip-type">Profile</span></div><div class="chip-badge">ADD</div></div>
+                <div class="chip opt"><div class="chip-main"><span class="chip-name">Account_Record_Page</span><span class="chip-type">FlexiPage — optional</span></div><div class="chip-badge">ADD</div></div>
+                <div class="chip ret"><div class="chip-main"><span class="chip-name">Account</span><span class="chip-type">CustomObject</span></div><div class="chip-badge">RETRIEVE</div></div>
+              </div>
+            </div>
+            <div class="op-why">Committing <code>LTM_Sales_App</code> and <code>Sales_User</code> retrieves their updated XMLs with the <code>&lt;profileActionOverrides&gt;</code> blocks deleted, removing the assignment in target orgs.</div>
+
+            <div class="xml-section">
+              <div class="xml-section-title">XML removed from LTM_Sales_App.app-meta.xml</div>
+              <div class="xml-wrap">
+                <pre><span class="xr">&lt;!-- REMOVED block --&gt;</span>
+<span class="xr">&lt;profileActionOverrides&gt;</span>
+<span class="xr">    &lt;actionName&gt;View&lt;/actionName&gt;</span>
+<span class="xr">    &lt;content&gt;Account_Record_Page&lt;/content&gt;</span>
+<span class="xr">    &lt;formFactor&gt;Large&lt;/formFactor&gt;</span>
+<span class="xr">    &lt;pageOrSobjectType&gt;Account&lt;/pageOrSobjectType&gt;</span>
+<span class="xr">    &lt;profile&gt;Sales_User&lt;/profile&gt;</span>
+<span class="xr">    &lt;recordType&gt;Account.Enterprise&lt;/recordType&gt;</span>
+<span class="xr">    &lt;type&gt;Flexipage&lt;/type&gt;</span>
+<span class="xr">&lt;/profileActionOverrides&gt;</span></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /fp -->
+
+
+  <!-- ════════════════════════════════════════════════
+       PAGE LAYOUT TAB
+  ════════════════════════════════════════════════ -->
+  <div id="pl" class="tab-pane">
+
+    <div class="struct-box">
+      <div class="struct-title">Key Structural Difference — Where Assignments Live</div>
+      <div class="struct-row">
+        <div class="struct-item">
+          <div class="struct-item-title">FlexiPage Assignments</div>
+          <div class="struct-item-body">Inside <code>CustomApplication (.app-meta.xml)</code> under <code>&lt;profileActionOverrides&gt;</code> or <code>&lt;actionOverrides&gt;</code>, or inside <code>CustomObject (.object-meta.xml)</code>.</div>
+        </div>
+        <div class="struct-item">
+          <div class="struct-item-title">Page Layout Assignments</div>
+          <div class="struct-item-body">Directly inside <code>Profile (.profile-meta.xml)</code> under the <code>&lt;layoutAssignments&gt;</code> block. Profile is always the source of truth.</div>
+        </div>
+      </div>
+      <div class="struct-note"><strong>Profile is always mandatory</strong> for page layout assignments — the assignment lives inside the Profile XML, not the layout file.</div>
+    </div>
+
+    <!-- PL TYPE 1 -->
+    <div class="asn">
+      <div class="asn-hdr"><span class="asn-tag">TYPE 1</span><h2>No Record Type</h2></div>
+      <p class="asn-desc">Assigns a Page Layout to a Profile for an object with <strong>no Record Types</strong>.</p>
+      <div class="op-grid">
+        <div class="op-card">
+          <div class="op-hdr assign"><span class="op-dot"></span>Assign</div>
+          <div class="op-body">
+            <div class="op-step"><strong>In Dev Org Setup:</strong> Assign the Page Layout to the Profile under Page Layout Assignments.</div>
+            <div>
+              <div class="commits-lbl">Copado Commit</div>
+              <div class="chips">
+                <div class="chip add"><div class="chip-main"><span class="chip-name">Sales_User</span><span class="chip-type">Profile</span></div><div class="chip-badge">ADD</div></div>
+                <div class="chip add"><div class="chip-main"><span class="chip-name">Account-Account (Sales) Layout</span><span class="chip-type">Layout — if new/modified</span></div><div class="chip-badge">ADD</div></div>
+              </div>
+            </div>
+            <div class="op-why"><code>Sales_User.profile-meta.xml</code> gets a new <code>&lt;layoutAssignments&gt;</code> block pointing to the layout.</div>
+
+            <div class="xml-section">
+              <div class="xml-section-title">XML added to Sales_User.profile-meta.xml</div>
+              <div class="xml-wrap">
+                <pre><span class="xa">&lt;!-- ADDED block --&gt;</span>
+<span class="xt">&lt;layoutAssignments&gt;</span>
+    <span class="xt">&lt;layout&gt;</span><span class="xv">Account-Account (Sales) Layout</span><span class="xt">&lt;/layout&gt;</span>
+<span class="xt">&lt;/layoutAssignments&gt;</span></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="op-card">
+          <div class="op-hdr remove"><span class="op-dot"></span>Remove / Change</div>
+          <div class="op-body">
+            <div class="op-step"><strong>In Dev Org Setup:</strong> Change the layout assignment for that Profile to a different layout.</div>
+            <div>
+              <div class="commits-lbl">Copado Commit</div>
+              <div class="chips">
+                <div class="chip add"><div class="chip-main"><span class="chip-name">Sales_User</span><span class="chip-type">Profile</span></div><div class="chip-badge">ADD</div></div>
+                <div class="chip ret"><div class="chip-main"><span class="chip-name">Account-Account (Sales) Layout</span><span class="chip-type">Layout — Retrieve Only</span></div><div class="chip-badge">RETRIEVE</div></div>
+              </div>
+            </div>
+            <div class="op-why">The updated <code>Sales_User.profile-meta.xml</code> has the <code>&lt;layoutAssignments&gt;</code> pointing to the new layout — deploying it overwrites the old assignment.</div>
+
+            <div class="xml-section">
+              <div class="xml-section-title">Old block replaced in Sales_User.profile-meta.xml</div>
+              <div class="xml-wrap">
+                <pre><span class="xr">&lt;!-- OLD layout reference replaced --&gt;</span>
+<span class="xr">&lt;layoutAssignments&gt;</span>
+<span class="xr">    &lt;layout&gt;Account-Account Old Layout&lt;/layout&gt;</span>
+<span class="xr">&lt;/layoutAssignments&gt;</span>
+
+<span class="xa">&lt;!-- NEW layout reference after change --&gt;</span>
+<span class="xt">&lt;layoutAssignments&gt;</span>
+    <span class="xt">&lt;layout&gt;</span><span class="xv">Account-Account (Sales) Layout</span><span class="xt">&lt;/layout&gt;</span>
+<span class="xt">&lt;/layoutAssignments&gt;</span></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="div">
+
+    <!-- PL TYPE 2 -->
+    <div class="asn">
+      <div class="asn-hdr"><span class="asn-tag">TYPE 2</span><h2>With Record Types</h2></div>
+      <p class="asn-desc">Maps a Page Layout to a <strong>Profile + Record Type</strong> combination. One <code>&lt;layoutAssignments&gt;</code> block per Record Type.</p>
+      <div class="op-grid">
+        <div class="op-card">
+          <div class="op-hdr assign"><span class="op-dot"></span>Assign</div>
+          <div class="op-body">
+            <div class="op-step"><strong>In Dev Org Setup:</strong> Map <code>Account-Account (Sales) Layout</code> to <code>Account.Enterprise</code> Record Type for <code>Sales_User</code>.</div>
+            <div>
+              <div class="commits-lbl">Copado Commit</div>
+              <div class="chips">
+                <div class="chip add"><div class="chip-main"><span class="chip-name">Sales_User</span><span class="chip-type">Profile</span></div><div class="chip-badge">ADD</div></div>
+                <div class="chip add"><div class="chip-main"><span class="chip-name">Account-Account (Sales) Layout</span><span class="chip-type">Layout — if new/modified</span></div><div class="chip-badge">ADD</div></div>
+                <div class="chip add"><div class="chip-main"><span class="chip-name">Account.Enterprise</span><span class="chip-type">RecordType — if new</span></div><div class="chip-badge">ADD</div></div>
+              </div>
+            </div>
+            <div class="op-why">Inside <code>Sales_User.profile-meta.xml</code>, Salesforce creates a <code>&lt;layoutAssignments&gt;</code> entry with both the layout name and the record type.</div>
+
+            <div class="xml-section">
+              <div class="xml-section-title">XML added to Sales_User.profile-meta.xml</div>
+              <div class="xml-wrap">
+                <pre><span class="xa">&lt;!-- ADDED block --&gt;</span>
+<span class="xt">&lt;layoutAssignments&gt;</span>
+    <span class="xt">&lt;layout&gt;</span><span class="xv">Account-Account (Sales) Layout</span><span class="xt">&lt;/layout&gt;</span>
+    <span class="xt">&lt;recordType&gt;</span><span class="xv">Account.Enterprise</span><span class="xt">&lt;/recordType&gt;</span>
+<span class="xt">&lt;/layoutAssignments&gt;</span></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="op-card">
+          <div class="op-hdr remove"><span class="op-dot"></span>Remove / Reassign</div>
+          <div class="op-body">
+            <div class="op-step"><strong>In Dev Org Setup:</strong> Reassign that Profile + Record Type to a different layout.</div>
+            <div>
+              <div class="commits-lbl">Copado Commit</div>
+              <div class="chips">
+                <div class="chip add"><div class="chip-main"><span class="chip-name">Sales_User</span><span class="chip-type">Profile</span></div><div class="chip-badge">ADD</div></div>
+                <div class="chip ret"><div class="chip-main"><span class="chip-name">Account-Account (Sales) Layout</span><span class="chip-type">Layout</span></div><div class="chip-badge">RETRIEVE</div></div>
+                <div class="chip ret"><div class="chip-main"><span class="chip-name">Account.Enterprise</span><span class="chip-type">RecordType</span></div><div class="chip-badge">RETRIEVE</div></div>
+              </div>
+            </div>
+            <div class="op-why">The Profile XML is updated with the new <code>&lt;layoutAssignments&gt;</code> mapping — deploying it replaces the assignment in target orgs.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /pl -->
+
+
+  <!-- ════════════════════════════════════════════════
+       CLI COMMIT GUIDE TAB
+  ════════════════════════════════════════════════ -->
+  <div id="cli" class="tab-pane">
+
+    <div class="section-intro">
+      <h2>CLI Commit Guide</h2>
+      <p>When you already know which XML block to add or remove, you can edit the file directly and commit from CLI — no Copado UI commit needed. This section covers every scenario: what component to commit, what block to touch, and when the FlexiPage is optional.</p>
+    </div>
+
+    <div class="callout callout-info" style="margin-bottom:24px">
+      <strong>Key rule:</strong> The FlexiPage file is only required in your deployment if it doesn't already exist in the target org. If it's already deployed there, you can commit only the component that holds the assignment (CustomApplication or CustomObject or Profile) and the deployment succeeds.
+    </div>
+
+    <!-- SCENARIO 1 -->
+    <div class="cli-scenario">
+      <div class="cli-scenario-hdr">
+        <div class="cli-scenario-title">
+          <span class="badge-cli">SCENARIO 1</span>
+          App Default — FlexiPage Assignment (Add or Remove)
+        </div>
+        <div class="cli-scenario-sub">Assignment lives in <code>LTM_Sales_App.app-meta.xml</code> → <code>&lt;actionOverrides&gt;</code></div>
+      </div>
+      <div class="cli-scenario-body">
+        <div class="cli-grid">
+          <div class="cli-col">
+            <span class="cli-col-title add">Add Assignment via CLI</span>
+            <div class="cli-col-body">
+              <strong>Component to commit:</strong> <code>LTM_Sales_App</code> (CustomApplication) only.<br><br>
+              <strong>FlexiPage needed?</strong> Only if <code>Account_Record_Page</code> doesn't exist in the target org yet. If it's already there — skip it.<br><br>
+              <strong>What to do:</strong> Open <code>LTM_Sales_App.app-meta.xml</code>, add the block below, then commit via CLI.
+            </div>
+            <div class="condition-box"><strong>Condition:</strong> FlexiPage already in target org → commit CustomApplication only. FlexiPage not in target → commit both.</div>
+            <div class="xml-block-inline">
+              <pre><span class="xa">&lt;!-- ADD inside .app-meta.xml --&gt;</span>
+<span class="xt">&lt;actionOverrides&gt;</span>
+  <span class="xt">&lt;actionName&gt;</span><span class="xv">View</span><span class="xt">&lt;/actionName&gt;</span>
+  <span class="xt">&lt;content&gt;</span><span class="xv">Account_Record_Page</span><span class="xt">&lt;/content&gt;</span>
+  <span class="xt">&lt;formFactor&gt;</span><span class="xv">Large</span><span class="xt">&lt;/formFactor&gt;</span>
+  <span class="xt">&lt;pageOrSobjectType&gt;</span><span class="xv">Account</span><span class="xt">&lt;/pageOrSobjectType&gt;</span>
+  <span class="xt">&lt;type&gt;</span><span class="xv">Flexipage</span><span class="xt">&lt;/type&gt;</span>
+<span class="xt">&lt;/actionOverrides&gt;</span></pre>
+            </div>
+          </div>
+          <div class="cli-col">
+            <span class="cli-col-title rem">Remove Assignment via CLI</span>
+            <div class="cli-col-body">
+              <strong>Component to commit:</strong> <code>LTM_Sales_App</code> (CustomApplication) only.<br><br>
+              <strong>FlexiPage needed?</strong> <strong>No</strong> — removal just deletes the <code>&lt;actionOverrides&gt;</code> block from the app XML. The FlexiPage itself stays in the org untouched.<br><br>
+              <strong>What to do:</strong> Open <code>LTM_Sales_App.app-meta.xml</code>, delete the entire block below, then commit via CLI.
+            </div>
+            <div class="condition-box"><strong>Condition:</strong> Always safe to commit CustomApplication alone for removal. FlexiPage is never needed.</div>
+            <div class="xml-block-inline">
+              <pre><span class="xr">&lt;!-- DELETE this block from .app-meta.xml --&gt;</span>
+<span class="xr">&lt;actionOverrides&gt;</span>
+<span class="xr">  &lt;actionName&gt;View&lt;/actionName&gt;</span>
+<span class="xr">  &lt;content&gt;Account_Record_Page&lt;/content&gt;</span>
+<span class="xr">  &lt;formFactor&gt;Large&lt;/formFactor&gt;</span>
+<span class="xr">  &lt;pageOrSobjectType&gt;Account&lt;/pageOrSobjectType&gt;</span>
+<span class="xr">  &lt;type&gt;Flexipage&lt;/type&gt;</span>
+<span class="xr">&lt;/actionOverrides&gt;</span></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCENARIO 2 -->
+    <div class="cli-scenario">
+      <div class="cli-scenario-hdr">
+        <div class="cli-scenario-title">
+          <span class="badge-cli">SCENARIO 2</span>
+          Org Default — FlexiPage Assignment (Add or Remove)
+        </div>
+        <div class="cli-scenario-sub">Assignment lives in <code>Account.object-meta.xml</code> → <code>&lt;actionOverrides&gt;</code></div>
+      </div>
+      <div class="cli-scenario-body">
+        <div class="cli-grid">
+          <div class="cli-col">
+            <span class="cli-col-title add">Add Assignment via CLI</span>
+            <div class="cli-col-body">
+              <strong>Component to commit:</strong> <code>Account</code> (CustomObject) only.<br><br>
+              <strong>FlexiPage needed?</strong> Only if it doesn't exist in target yet.
+            </div>
+            <div class="xml-block-inline">
+              <pre><span class="xa">&lt;!-- ADD inside Account.object-meta.xml --&gt;</span>
+<span class="xt">&lt;actionOverrides&gt;</span>
+  <span class="xt">&lt;actionName&gt;</span><span class="xv">View</span><span class="xt">&lt;/actionName&gt;</span>
+  <span class="xt">&lt;content&gt;</span><span class="xv">Account_Record_Page</span><span class="xt">&lt;/content&gt;</span>
+  <span class="xt">&lt;formFactor&gt;</span><span class="xv">Large</span><span class="xt">&lt;/formFactor&gt;</span>
+  <span class="xt">&lt;skipRecordTypeSelect&gt;</span><span class="xv">false</span><span class="xt">&lt;/skipRecordTypeSelect&gt;</span>
+  <span class="xt">&lt;type&gt;</span><span class="xv">Flexipage</span><span class="xt">&lt;/type&gt;</span>
+<span class="xt">&lt;/actionOverrides&gt;</span></pre>
+            </div>
+          </div>
+          <div class="cli-col">
+            <span class="cli-col-title rem">Remove Assignment via CLI</span>
+            <div class="cli-col-body">
+              <strong>Component to commit:</strong> <code>Account</code> (CustomObject) only.<br><br>
+              <strong>FlexiPage needed?</strong> <strong>No</strong> — deleting the <code>&lt;actionOverrides&gt;</code> block is enough.
+            </div>
+            <div class="xml-block-inline">
+              <pre><span class="xr">&lt;!-- DELETE this block from Account.object-meta.xml --&gt;</span>
+<span class="xr">&lt;actionOverrides&gt;</span>
+<span class="xr">  &lt;actionName&gt;View&lt;/actionName&gt;</span>
+<span class="xr">  &lt;content&gt;Account_Record_Page&lt;/content&gt;</span>
+<span class="xr">  &lt;formFactor&gt;Large&lt;/formFactor&gt;</span>
+<span class="xr">  &lt;skipRecordTypeSelect&gt;false&lt;/skipRecordTypeSelect&gt;</span>
+<span class="xr">  &lt;type&gt;Flexipage&lt;/type&gt;</span>
+<span class="xr">&lt;/actionOverrides&gt;</span></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCENARIO 3 -->
+    <div class="cli-scenario">
+      <div class="cli-scenario-hdr">
+        <div class="cli-scenario-title">
+          <span class="badge-cli">SCENARIO 3</span>
+          App + Record Type + Profile Assignment (Add or Remove)
+        </div>
+        <div class="cli-scenario-sub">Assignment lives in <code>LTM_Sales_App.app-meta.xml</code> → <code>&lt;profileActionOverrides&gt;</code></div>
+      </div>
+      <div class="cli-scenario-body">
+        <div class="cli-grid">
+          <div class="cli-col">
+            <span class="cli-col-title add">Add Assignment via CLI</span>
+            <div class="cli-col-body">
+              <strong>Components to commit:</strong> <code>LTM_Sales_App</code> (CustomApplication) + <code>Sales_User</code> (Profile).<br><br>
+              <strong>FlexiPage needed?</strong> Only if not already in target org.
+            </div>
+            <div class="xml-block-inline">
+              <pre><span class="xa">&lt;!-- ADD inside LTM_Sales_App.app-meta.xml --&gt;</span>
+<span class="xt">&lt;profileActionOverrides&gt;</span>
+  <span class="xt">&lt;actionName&gt;</span><span class="xv">View</span><span class="xt">&lt;/actionName&gt;</span>
+  <span class="xt">&lt;content&gt;</span><span class="xv">Account_Record_Page</span><span class="xt">&lt;/content&gt;</span>
+  <span class="xt">&lt;formFactor&gt;</span><span class="xv">Large</span><span class="xt">&lt;/formFactor&gt;</span>
+  <span class="xt">&lt;pageOrSobjectType&gt;</span><span class="xv">Account</span><span class="xt">&lt;/pageOrSobjectType&gt;</span>
+  <span class="xt">&lt;profile&gt;</span><span class="xv">Sales_User</span><span class="xt">&lt;/profile&gt;</span>
+  <span class="xt">&lt;recordType&gt;</span><span class="xv">Account.Enterprise</span><span class="xt">&lt;/recordType&gt;</span>
+  <span class="xt">&lt;type&gt;</span><span class="xv">Flexipage</span><span class="xt">&lt;/type&gt;</span>
+<span class="xt">&lt;/profileActionOverrides&gt;</span></pre>
+            </div>
+          </div>
+          <div class="cli-col">
+            <span class="cli-col-title rem">Remove Assignment via CLI</span>
+            <div class="cli-col-body">
+              <strong>Components to commit:</strong> <code>LTM_Sales_App</code> (CustomApplication) only — Profile not required for removal.<br><br>
+              <strong>FlexiPage needed?</strong> <strong>No.</strong> Just delete the <code>&lt;profileActionOverrides&gt;</code> block and commit the app.
+            </div>
+            <div class="xml-block-inline">
+              <pre><span class="xr">&lt;!-- DELETE this block from LTM_Sales_App.app-meta.xml --&gt;</span>
+<span class="xr">&lt;profileActionOverrides&gt;</span>
+<span class="xr">  &lt;actionName&gt;View&lt;/actionName&gt;</span>
+<span class="xr">  &lt;content&gt;Account_Record_Page&lt;/content&gt;</span>
+<span class="xr">  &lt;formFactor&gt;Large&lt;/formFactor&gt;</span>
+<span class="xr">  &lt;pageOrSobjectType&gt;Account&lt;/pageOrSobjectType&gt;</span>
+<span class="xr">  &lt;profile&gt;Sales_User&lt;/profile&gt;</span>
+<span class="xr">  &lt;recordType&gt;Account.Enterprise&lt;/recordType&gt;</span>
+<span class="xr">  &lt;type&gt;Flexipage&lt;/type&gt;</span>
+<span class="xr">&lt;/profileActionOverrides&gt;</span></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCENARIO 4 -->
+    <div class="cli-scenario">
+      <div class="cli-scenario-hdr">
+        <div class="cli-scenario-title">
+          <span class="badge-cli">SCENARIO 4</span>
+          Page Layout Assignment (Add or Remove)
+        </div>
+        <div class="cli-scenario-sub">Assignment lives in <code>Sales_User.profile-meta.xml</code> → <code>&lt;layoutAssignments&gt;</code></div>
+      </div>
+      <div class="cli-scenario-body">
+        <div class="cli-grid">
+          <div class="cli-col">
+            <span class="cli-col-title add">Add Assignment via CLI</span>
+            <div class="cli-col-body">
+              <strong>Component to commit:</strong> <code>Sales_User</code> (Profile) only.<br><br>
+              <strong>Layout file needed?</strong> Only if the layout is new or modified. If it already exists in target org — skip it.
+            </div>
+            <div class="xml-block-inline">
+              <pre><span class="xa">&lt;!-- ADD inside Sales_User.profile-meta.xml --&gt;</span>
+
+<span class="xc">&lt;!-- Without Record Type --&gt;</span>
+<span class="xt">&lt;layoutAssignments&gt;</span>
+  <span class="xt">&lt;layout&gt;</span><span class="xv">Account-Account (Sales) Layout</span><span class="xt">&lt;/layout&gt;</span>
+<span class="xt">&lt;/layoutAssignments&gt;</span>
+
+<span class="xc">&lt;!-- With Record Type --&gt;</span>
+<span class="xt">&lt;layoutAssignments&gt;</span>
+  <span class="xt">&lt;layout&gt;</span><span class="xv">Account-Account (Sales) Layout</span><span class="xt">&lt;/layout&gt;</span>
+  <span class="xt">&lt;recordType&gt;</span><span class="xv">Account.Enterprise</span><span class="xt">&lt;/recordType&gt;</span>
+<span class="xt">&lt;/layoutAssignments&gt;</span></pre>
+            </div>
+          </div>
+          <div class="cli-col">
+            <span class="cli-col-title rem">Remove / Change Assignment via CLI</span>
+            <div class="cli-col-body">
+              <strong>Component to commit:</strong> <code>Sales_User</code> (Profile) only.<br><br>
+              <strong>Layout file needed?</strong> <strong>No</strong> — just update the <code>&lt;layoutAssignments&gt;</code> block in the Profile to point to the new layout (or delete the block entirely to remove).
+            </div>
+            <div class="xml-block-inline">
+              <pre><span class="xr">&lt;!-- DELETE or REPLACE in Sales_User.profile-meta.xml --&gt;</span>
+<span class="xr">&lt;layoutAssignments&gt;</span>
+<span class="xr">  &lt;layout&gt;Account-Account Old Layout&lt;/layout&gt;</span>
+<span class="xr">  &lt;recordType&gt;Account.Enterprise&lt;/recordType&gt;</span>
+<span class="xr">&lt;/layoutAssignments&gt;</span>
+
+<span class="xa">&lt;!-- Replace with new layout --&gt;</span>
+<span class="xt">&lt;layoutAssignments&gt;</span>
+  <span class="xt">&lt;layout&gt;</span><span class="xv">Account-Account (Sales) Layout</span><span class="xt">&lt;/layout&gt;</span>
+  <span class="xt">&lt;recordType&gt;</span><span class="xv">Account.Enterprise</span><span class="xt">&lt;/recordType&gt;</span>
+<span class="xt">&lt;/layoutAssignments&gt;</span></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /cli -->
+
+
+  <!-- ════════════════════════════════════════════════
+       COMPARISON TAB
+  ════════════════════════════════════════════════ -->
+  <div id="cmp" class="tab-pane">
+    <div class="section-intro">
+      <h2>Full Comparison</h2>
+      <p>What to commit, what file holds the assignment, and whether CLI-only commit works.</p>
+    </div>
+    <div class="tbl-wrap">
+      <table class="sum-tbl">
+        <thead>
+          <tr>
+            <th>Scenario</th>
+            <th>Assignment stored in</th>
+            <th>XML block</th>
+            <th>FlexiPage / Layout required?</th>
+            <th>CLI commit only?</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="fc">FP — Org Default (Add)</td>
+            <td><code>CustomObject</code></td>
+            <td><code>&lt;actionOverrides&gt;</code></td>
+            <td><span class="pill pill-c">Only if new in target</span></td>
+            <td><span class="pill pill-y">Yes</span></td>
+          </tr>
+          <tr>
+            <td class="fc">FP — Org Default (Remove)</td>
+            <td><code>CustomObject</code></td>
+            <td><code>&lt;actionOverrides&gt;</code> deleted</td>
+            <td><span class="pill pill-n">Not needed</span></td>
+            <td><span class="pill pill-y">Yes — Object only</span></td>
+          </tr>
+          <tr>
+            <td class="fc">FP — App Default (Add)</td>
+            <td><code>CustomApplication</code></td>
+            <td><code>&lt;actionOverrides&gt;</code></td>
+            <td><span class="pill pill-c">Only if new in target</span></td>
+            <td><span class="pill pill-y">Yes</span></td>
+          </tr>
+          <tr>
+            <td class="fc">FP — App Default (Remove)</td>
+            <td><code>CustomApplication</code></td>
+            <td><code>&lt;actionOverrides&gt;</code> deleted</td>
+            <td><span class="pill pill-n">Not needed</span></td>
+            <td><span class="pill pill-y">Yes — App only</span></td>
+          </tr>
+          <tr>
+            <td class="fc">FP — App + RT + Profile (Add)</td>
+            <td><code>CustomApplication</code></td>
+            <td><code>&lt;profileActionOverrides&gt;</code></td>
+            <td><span class="pill pill-c">Only if new in target</span></td>
+            <td><span class="pill pill-y">Yes — App + Profile</span></td>
+          </tr>
+          <tr>
+            <td class="fc">FP — App + RT + Profile (Remove)</td>
+            <td><code>CustomApplication</code></td>
+            <td><code>&lt;profileActionOverrides&gt;</code> deleted</td>
+            <td><span class="pill pill-n">Not needed</span></td>
+            <td><span class="pill pill-y">Yes — App only</span></td>
+          </tr>
+          <tr>
+            <td class="fc">Layout — No RT (Add / Change)</td>
+            <td><code>Profile</code></td>
+            <td><code>&lt;layoutAssignments&gt;</code></td>
+            <td><span class="pill pill-c">Only if new/modified</span></td>
+            <td><span class="pill pill-y">Yes — Profile only</span></td>
+          </tr>
+          <tr>
+            <td class="fc">Layout — With RT (Add / Change)</td>
+            <td><code>Profile</code></td>
+            <td><code>&lt;layoutAssignments&gt;</code> + <code>&lt;recordType&gt;</code></td>
+            <td><span class="pill pill-c">Only if new/modified</span></td>
+            <td><span class="pill pill-y">Yes — Profile only</span></td>
+          </tr>
+          <tr>
+            <td class="fc">standard_serviceConsole App</td>
+            <td>N/A</td>
+            <td>N/A</td>
+            <td>N/A</td>
+            <td><span class="pill pill-n">Manual step only</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div><!-- /cmp -->
+
+</div>
+
+<script>
+function switchTab(e, id) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  e.currentTarget.classList.add('active');
+  document.getElementById(id).classList.add('active');
+}
+</script>
+</body>
+</html>
